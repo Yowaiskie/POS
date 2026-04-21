@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MenuCategory;
+use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Room;
 use App\Models\RoomSession;
@@ -15,7 +17,14 @@ class RoomController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('rooms.index', ['rooms' => $rooms]);
+        $categories = MenuCategory::withCount('items')->orderBy('id')->get();
+        $items = MenuItem::with('category')->where('is_active', true)->orderBy('name')->get();
+
+        return view('rooms.index', [
+            'rooms' => $rooms,
+            'categories' => $categories,
+            'items' => $items,
+        ]);
     }
 
     public function startSession(Room $room)

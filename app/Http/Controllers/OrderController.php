@@ -47,10 +47,17 @@ class OrderController extends Controller
     {
         $item = MenuItem::findOrFail($request->menu_item_id);
         
-        $order = Order::firstOrCreate(
-            ['order_type' => 'short', 'status' => 'open'],
-            ['order_number' => 'SO-' . strtoupper(uniqid())]
-        );
+        if ($request->has('room_session_id')) {
+            $order = Order::firstOrCreate(
+                ['room_session_id' => $request->room_session_id, 'status' => 'open', 'order_type' => 'room'],
+                ['order_number' => 'RO-' . strtoupper(uniqid())]
+            );
+        } else {
+            $order = Order::firstOrCreate(
+                ['order_type' => 'short', 'status' => 'open'],
+                ['order_number' => 'SO-' . strtoupper(uniqid())]
+            );
+        }
 
         $orderItem = $order->items()->where('menu_item_id', $item->id)->first();
 
@@ -65,12 +72,19 @@ class OrderController extends Controller
             ]);
         }
 
-        return back()->with('success', "Added {$item->name} to cart.");
+        $redirect = back()->with('success', "Added {$item->name} to cart.");
+        
+        if ($order->room_session_id) {
+            $redirect->with('open_modal_for_session', $order->room_session_id);
+        }
+
+        return $redirect;
     }
 
     public function updateQuantity(Request $request, OrderItem $item)
     {
         $quantity = $item->quantity + ($request->delta ?? 0);
+        $order = $item->order;
         
         if ($quantity <= 0) {
             $item->delete();
@@ -78,13 +92,25 @@ class OrderController extends Controller
             $item->update(['quantity' => $quantity]);
         }
 
-        return back();
+        $redirect = back();
+        if ($order && $order->room_session_id) {
+            $redirect->with('open_modal_for_session', $order->room_session_id);
+        }
+
+        return $redirect;
     }
 
     public function removeItem(OrderItem $item)
     {
+        $order = $item->order;
         $item->delete();
-        return back();
+        
+        $redirect = back();
+        if ($order && $order->room_session_id) {
+            $redirect->with('open_modal_for_session', $order->room_session_id);
+        }
+
+        return $redirect;
     }
 
     public function checkout(Request $request)
