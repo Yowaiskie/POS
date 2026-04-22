@@ -13,7 +13,7 @@ class RoomController extends Controller
 {
     public function index()
     {
-        $rooms = Room::with(['activeSession.orders.items'])
+        $rooms = Room::with(['activeSession.orders.items.menuItem'])
             ->orderBy('name')
             ->get();
 
@@ -57,6 +57,30 @@ class RoomController extends Controller
 
     public function billOut(Request $request, RoomSession $session)
     {
+        $openOrders = $session->orders()->where('status', 'open')->with('items.menuItem')->get();
+
+        // Stock validation
+        foreach ($openOrders as $order) {
+            foreach ($order->items as $orderItem) {
+                $menuItem = $orderItem->menuItem;
+                if ($menuItem && $menuItem->stock_quantity !== null) {
+                    if ($menuItem->stock_quantity < $orderItem->quantity) {
+                        return back()->with('error', "Cannot complete bill out: \"{$menuItem->name}\" only has {$menuItem->stock_quantity} left in stock.");
+                    }
+                }
+            }
+        }
+
+        // Deduct stock
+        foreach ($openOrders as $order) {
+            foreach ($order->items as $orderItem) {
+                $menuItem = $orderItem->menuItem;
+                if ($menuItem && $menuItem->stock_quantity !== null) {
+                    $menuItem->decrement('stock_quantity', $orderItem->quantity);
+                }
+            }
+        }
+
         $session->update([
             'status' => 'completed',
             'ends_at' => now(),
@@ -64,14 +88,14 @@ class RoomController extends Controller
 
         $userId = auth()->id() ?? 1;
 
-        $session->orders()->where('status', 'open')->get()->each(function ($order) use ($request, $userId) {
+        foreach ($openOrders as $order) {
             $order->update([
                 'status' => 'paid',
                 'payment_method' => $request->payment_method ?? 'cash',
                 'closed_at' => now(),
                 'user_id' => $order->user_id ?? $userId,
             ]);
-        });
+        }
 
         return back()->with('success', "Room billed out successfully.");
     }

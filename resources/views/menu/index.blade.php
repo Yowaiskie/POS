@@ -4,15 +4,21 @@
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto" x-data="{ 
     showModal: false, 
     editingItem: null,
-    formData: { name: '', price: '', category_id: '' },
+    formData: { name: '', price: '', category_id: '', stock_quantity: '', unlimited: true },
     openAddModal() {
         this.editingItem = null;
-        this.formData = { name: '', price: '', category_id: '{{ $categories->first()?->id }}' };
+        this.formData = { name: '', price: '', category_id: '{{ $categories->first()?->id }}', stock_quantity: '', unlimited: true };
         this.showModal = true;
     },
     openEditModal(item) {
         this.editingItem = item;
-        this.formData = { name: item.name, price: item.price, category_id: item.category_id };
+        this.formData = {
+            name: item.name,
+            price: item.price,
+            category_id: item.category_id,
+            stock_quantity: item.stock_quantity ?? '',
+            unlimited: item.stock_quantity === null
+        };
         this.showModal = true;
     }
 }">
@@ -40,11 +46,32 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         @forelse($items as $item)
+            @php $status = $item->stockStatus(); @endphp
             <div class="bg-white rounded-xl border-2 border-slate-200 p-5 md:p-6 transition-all hover:shadow-lg hover:border-indigo-400">
                 <h3 class="text-lg md:text-xl mb-3 font-semibold text-slate-900">{{ $item->name }}</h3>
-                <div class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">₱{{ number_format($item->price) }}</div>
-                <div class="text-xs md:text-sm text-slate-600 capitalize mb-4 bg-slate-100 px-3 py-1 rounded-full inline-block">
+                <div class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">₱{{ number_format($item->price) }}</div>
+                <div class="text-xs md:text-sm text-slate-600 capitalize mb-3 bg-slate-100 px-3 py-1 rounded-full inline-block">
                     {{ $item->category?->name ?? 'Uncategorized' }}
+                </div>
+                {{-- Stock badge --}}
+                <div class="mb-4">
+                    @if($status === 'unlimited')
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
+                            <i data-lucide="infinity" class="w-3 h-3"></i> Unlimited Stock
+                        </span>
+                    @elseif($status === 'out_of_stock')
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">
+                            <i data-lucide="x-circle" class="w-3 h-3"></i> Out of Stock
+                        </span>
+                    @elseif($status === 'low')
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                            <i data-lucide="alert-triangle" class="w-3 h-3"></i> Low: {{ $item->stock_quantity }} left
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                            <i data-lucide="package" class="w-3 h-3"></i> {{ $item->stock_quantity }} in stock
+                        </span>
+                    @endif
                 </div>
                 <div class="flex gap-2 mt-4">
                     <button @click='openEditModal(@json($item))' class="flex-1 px-4 py-2 bg-[#6366f1] text-white rounded-lg hover:bg-[#5558e3] active:scale-95 transition-all shadow-sm text-sm font-medium">
@@ -102,6 +129,25 @@
                                 <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    {{-- Stock Quantity --}}
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Stock Quantity</label>
+                        <div class="flex items-center gap-3 mb-2">
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600">
+                                <input type="checkbox" name="unlimited" value="1"
+                                       x-model="formData.unlimited"
+                                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                Unlimited (no stock tracking)
+                            </label>
+                        </div>
+                        <input type="number" name="stock_quantity"
+                               x-model="formData.stock_quantity"
+                               x-bind:disabled="formData.unlimited"
+                               min="0"
+                               placeholder="e.g. 50"
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none disabled:opacity-40 disabled:bg-slate-50">
                     </div>
                 </div>
 

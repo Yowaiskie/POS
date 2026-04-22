@@ -23,17 +23,40 @@
                 @endforeach
             </div>
 
-            <!-- Middle: Items Grid -->
             <div class="flex-1 p-6 overflow-y-auto">
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($items as $item)
+                        @php
+                            $status = $item->stockStatus();
+                            $outOfStock = $item->isOutOfStock();
+                        @endphp
                         <form action="{{ route('orders.add-item') }}" method="POST" x-show="selectedCategory === '{{ $item->category->slug }}'" x-transition>
                             @csrf
                             <input type="hidden" name="menu_item_id" value="{{ $item->id }}">
                             <input type="hidden" name="room_session_id" :value="activeSession ? activeSession.id : ''">
-                            <button type="submit" class="w-full p-6 rounded-xl border-2 border-gray-200 bg-white hover:border-[#6366f1] hover:shadow-md transition-all cursor-pointer active:scale-95 text-left h-full flex flex-col">
+                            <button type="submit" 
+                                    @class([
+                                        'w-full p-6 rounded-xl border-2 transition-all text-left h-full flex flex-col',
+                                        'bg-white border-gray-200 hover:border-[#6366f1] hover:shadow-md cursor-pointer active:scale-95' => !$outOfStock,
+                                        'bg-slate-50 border-gray-100 cursor-not-allowed opacity-60' => $outOfStock,
+                                    ])
+                                    {{ $outOfStock ? 'disabled' : '' }}>
                                 <h4 class="mb-2 font-semibold text-slate-900 line-clamp-2 min-h-[3rem] flex-1">{{ $item->name }}</h4>
-                                <div class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">₱{{ number_format($item->price) }}</div>
+                                <div class="flex items-end justify-between gap-2">
+                                    <div class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">₱{{ number_format($item->price) }}</div>
+                                    
+                                    <div class="mb-1">
+                                        @if($status === 'unlimited')
+                                            {{-- Nothing --}}
+                                        @elseif($status === 'out_of_stock')
+                                            <span class="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">OUT</span>
+                                        @elseif($status === 'low')
+                                            <span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">{{ $item->stock_quantity }} left</span>
+                                        @else
+                                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">{{ $item->stock_quantity }} left</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </button>
                         </form>
                     @endforeach
@@ -55,10 +78,17 @@
                             <div class="space-y-2">
                                 <template x-for="item in order.items" :key="item.id">
                                     <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-                                        <div class="flex justify-between items-start gap-2 mb-2">
-                                            <div class="flex-1">
-                                                <div class="font-medium text-sm text-slate-900" x-text="item.name"></div>
-                                                <div class="text-xs text-gray-500" x-text="'₱' + Number(item.unit_price).toLocaleString() + ' x ' + item.quantity"></div>
+                                         <div class="flex justify-between items-start gap-2 mb-2">
+                                             <div class="flex-1">
+                                                 <div class="font-medium text-sm text-slate-900" x-text="item.name"></div>
+                                                 <div class="text-xs text-gray-500" x-text="'₱' + Number(item.unit_price).toLocaleString() + ' x ' + item.quantity"></div>
+                                                 
+                                                 <template x-if="item.menu_item && item.menu_item.stock_quantity !== null">
+                                                     <div class="text-[10px] font-bold mt-1" 
+                                                          :class="item.quantity >= item.menu_item.stock_quantity ? 'text-red-500' : 'text-slate-400'">
+                                                        <span x-text="'Stock: ' + item.menu_item.stock_quantity"></span>
+                                                    </div>
+                                                </template>
                                             </div>
                                             <form :action="`{{ url('orders/remove-item') }}/${item.id}`" method="POST">
                                                 @csrf
@@ -82,7 +112,9 @@
                                                 <form :action="`{{ url('orders/update-quantity') }}/${item.id}`" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="delta" value="1">
-                                                    <button type="submit" class="w-6 h-6 flex items-center justify-center bg-[#6366f1] text-white hover:bg-indigo-700 rounded shadow-sm">
+                                                    <button type="submit" 
+                                                            class="w-6 h-6 flex items-center justify-center bg-[#6366f1] text-white hover:bg-indigo-700 rounded shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                                                            :disabled="item.menu_item && item.menu_item.stock_quantity !== null && item.quantity >= item.menu_item.stock_quantity">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                                     </button>
                                                 </form>

@@ -23,8 +23,8 @@ class MenuController extends Controller
         $items = $itemsQuery->orderBy('name')->get();
 
         return view('menu.index', [
-            'categories' => $categories,
-            'items' => $items,
+            'categories'      => $categories,
+            'items'           => $items,
             'selectedCategory' => $selectedCategory,
         ]);
     }
@@ -32,10 +32,16 @@ class MenuController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'category_id' => 'required|exists:menu_categories,id',
+            'name'           => 'required|string|max:255',
+            'price'          => 'required|numeric|min:0',
+            'category_id'    => 'required|exists:menu_categories,id',
+            'stock_quantity' => 'nullable|integer|min:0',
         ]);
+
+        // Treat "unlimited" checkbox — if not present, keep value; if no value given, null = unlimited
+        if ($request->boolean('unlimited')) {
+            $validated['stock_quantity'] = null;
+        }
 
         MenuItem::create($validated);
 
@@ -45,10 +51,15 @@ class MenuController extends Controller
     public function update(Request $request, MenuItem $item)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'category_id' => 'required|exists:menu_categories,id',
+            'name'           => 'required|string|max:255',
+            'price'          => 'required|numeric|min:0',
+            'category_id'    => 'required|exists:menu_categories,id',
+            'stock_quantity' => 'nullable|integer|min:0',
         ]);
+
+        if ($request->boolean('unlimited')) {
+            $validated['stock_quantity'] = null;
+        }
 
         $item->update($validated);
 

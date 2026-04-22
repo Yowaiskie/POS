@@ -15,7 +15,7 @@
         this.sidebarCollapsed = !this.sidebarCollapsed;
         localStorage.setItem('sidebarCollapsed', JSON.stringify(this.sidebarCollapsed));
     }
-}">
+}" x-effect="notifications.length; $nextTick(() => lucide.createIcons())">
     <div class="flex h-screen bg-[--background] text-[--foreground] overflow-hidden">
         <!-- Sidebar -->
         @include('partials.sidebar')
@@ -30,6 +30,17 @@
 
     <!-- Toast Notifications -->
     <div class="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-50 flex flex-col gap-3 pointer-events-none">
+        <!-- Dynamic Notifications -->
+        <template x-for="n in notifications" :key="n.id">
+            <div class="px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transition-all"
+                 :class="n.type === 'error' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'"
+                 x-transition:enter="translate-x-full" x-transition:enter-end="translate-x-0"
+                 x-transition:leave="opacity-0 scale-95">
+                <i :data-lucide="n.type === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
+                <div class="font-bold" x-text="n.message"></div>
+            </div>
+        </template>
+
         @if(session('success'))
             <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" 
                  class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transition-all"

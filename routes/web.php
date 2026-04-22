@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\InventoryController;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -43,6 +44,11 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('reports')->name('reports.')->middleware('role:admin')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
+    });
+
+    Route::prefix('inventory')->name('inventory.')->middleware('role:admin')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::put('/{item}', [InventoryController::class, 'update'])->name('update');
     });
 
     Route::prefix('users')->name('users.')->middleware('role:admin')->group(function () {
