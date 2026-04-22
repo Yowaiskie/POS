@@ -1,13 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto" x-data="{ bulkMode: false }">
 
     {{-- Header --}}
-    <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Inventory</h1>
-        <p class="text-slate-600">Manage stock levels for all menu items</p>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Inventory</h1>
+            <p class="text-slate-600">Manage stock levels for all menu items</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button @click="bulkMode = !bulkMode"
+                    x-show="!bulkMode"
+                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-sm hover:bg-indigo-700 transition-all flex items-center gap-2">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+                Bulk Restock
+            </button>
+            <div x-show="bulkMode" x-cloak class="flex items-center gap-3">
+                <button type="submit" form="bulk-update-form"
+                        class="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold shadow-sm hover:bg-emerald-700 transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-5 h-5"></i>
+                    Save All Changes
+                </button>
+                <button @click="bulkMode = false"
+                        class="px-5 py-2.5 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-all">
+                    Cancel
+                </button>
+            </div>
+        </div>
     </div>
+
+    {{-- Bulk Update Form (Hidden, used by inputs via form attribute) --}}
+    <form id="bulk-update-form" action="{{ route('inventory.bulk-update') }}" method="POST" class="hidden">
+        @csrf
+    </form>
 
     {{-- Flash Messages --}}
     @if(session('success'))
@@ -109,27 +135,48 @@
                             ₱{{ number_format($item->price) }}
                         </td>
                         <td class="px-5 py-4 text-center">
-                            @if($status === 'unlimited')
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
-                                    <i data-lucide="infinity" class="w-3 h-3"></i> Unlimited
-                                </span>
-                            @elseif($status === 'out_of_stock')
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                                    <i data-lucide="x-circle" class="w-3 h-3"></i> Out of Stock
-                                </span>
-                            @elseif($status === 'low')
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                                    <i data-lucide="alert-triangle" class="w-3 h-3"></i> Low ({{ $item->stock_quantity }})
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> {{ $item->stock_quantity }}
-                                </span>
-                            @endif
+                            <template x-if="!bulkMode">
+                                <div>
+                                    @if($status === 'unlimited')
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                                            <i data-lucide="infinity" class="w-3 h-3"></i> Unlimited
+                                        </span>
+                                    @elseif($status === 'out_of_stock')
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                            <i data-lucide="x-circle" class="w-3 h-3"></i> Out of Stock
+                                        </span>
+                                    @elseif($status === 'low')
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                                            <i data-lucide="alert-triangle" class="w-3 h-3"></i> Low ({{ $item->stock_quantity }})
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                            <i data-lucide="check-circle-2" class="w-3 h-3"></i> {{ $item->stock_quantity }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </template>
+                            <template x-if="bulkMode">
+                                <div class="flex items-center justify-center gap-2">
+                                    <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
+                                        <input type="checkbox" name="items[{{ $item->id }}][unlimited]" value="1"
+                                               x-model="unlimited"
+                                               form="bulk-update-form"
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        Inf
+                                    </label>
+                                    <input type="number" name="items[{{ $item->id }}][stock_quantity]"
+                                           x-model="qty"
+                                           x-bind:disabled="unlimited"
+                                           form="bulk-update-form"
+                                           min="0"
+                                           class="w-20 px-2 py-1 text-xs border-2 border-gray-200 rounded-lg focus:border-indigo-400 focus:outline-none disabled:opacity-40 disabled:bg-slate-100">
+                                </div>
+                            </template>
                         </td>
                         <td class="px-5 py-4">
                             {{-- View mode --}}
-                            <div class="flex items-center justify-end gap-2" x-show="!editing">
+                            <div class="flex items-center justify-end gap-2" x-show="!editing && !bulkMode">
                                 <button @click="editing = true"
                                     class="px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-1.5">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit Stock
@@ -138,7 +185,7 @@
 
                             {{-- Edit mode --}}
                             <form action="{{ route('inventory.update', $item) }}" method="POST"
-                                  class="flex items-center justify-end gap-2" x-show="editing" x-cloak>
+                                  class="flex items-center justify-end gap-2" x-show="editing && !bulkMode" x-cloak>
                                 @csrf
                                 @method('PUT')
 
@@ -164,6 +211,10 @@
                                     Cancel
                                 </button>
                             </form>
+
+                            <div x-show="bulkMode" class="text-right text-xs text-slate-400 italic">
+                                Bulk editing...
+                            </div>
                         </td>
                     </tr>
                 @empty

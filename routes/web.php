@@ -48,6 +48,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('inventory')->name('inventory.')->middleware('role:admin')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::post('/bulk-update', [InventoryController::class, 'bulkUpdate'])->name('bulk-update');
         Route::put('/{item}', [InventoryController::class, 'update'])->name('update');
     });
 

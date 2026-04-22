@@ -49,4 +49,23 @@ class InventoryController extends Controller
 
         return back()->with('success', "Stock for \"{$item->name}\" updated successfully.");
     }
+
+    public function bulkUpdate(Request $request)
+    {
+        $items = $request->input('items', []);
+        $updatedCount = 0;
+
+        foreach ($items as $id => $data) {
+            $menuItem = MenuItem::find($id);
+            if ($menuItem) {
+                $isUnlimited = isset($data['unlimited']) && $data['unlimited'] == '1';
+                $menuItem->update([
+                    'stock_quantity' => $isUnlimited ? null : ($data['stock_quantity'] ?? 0),
+                ]);
+                $updatedCount++;
+            }
+        }
+
+        return back()->with('success', "Updated stock for {$updatedCount} items.");
+    }
 }
