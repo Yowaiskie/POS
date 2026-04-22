@@ -35,7 +35,7 @@ class RoomController extends Controller
 
         $room->sessions()->create([
             'started_at' => now(),
-            'end_time' => now()->addHour(), // Default 1 hour
+            'ends_at' => now()->addHour(), // Default 1 hour
             'status' => 'active',
         ]);
 
@@ -44,20 +44,34 @@ class RoomController extends Controller
 
     public function extendSession(RoomSession $session)
     {
+        $duration = request('duration', 30);
+        $newEndsAt = $session->ends_at ? $session->ends_at->addMinutes($duration) : now()->addMinutes($duration);
+
         $session->update([
-            'end_time' => $session->end_time->addMinutes(30),
+            'ends_at' => $newEndsAt,
             'status' => 'active', // Reset to active if it was warning/overtime
         ]);
 
-        return back()->with('success', "Extended session by 30 minutes.");
+        return back()->with('success', "Extended session by {$duration} minutes.");
     }
 
-    public function billOut(RoomSession $session)
+    public function billOut(Request $request, RoomSession $session)
     {
         $session->update([
             'status' => 'completed',
-            'ended_at' => now(),
+            'ends_at' => now(),
         ]);
+
+        $userId = auth()->id() ?? 1;
+
+        $session->orders()->where('status', 'open')->get()->each(function ($order) use ($request, $userId) {
+            $order->update([
+                'status' => 'paid',
+                'payment_method' => $request->payment_method ?? 'cash',
+                'closed_at' => now(),
+                'user_id' => $order->user_id ?? $userId,
+            ]);
+        });
 
         return back()->with('success', "Room billed out successfully.");
     }

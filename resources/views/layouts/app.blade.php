@@ -6,26 +6,53 @@
     <title>BOSSTON - KTV POS System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="antialiased">
-    <div class="flex h-screen overflow-hidden">
+<body class="antialiased" x-data="{
+    sidebarCollapsed: JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'false'),
+    notifications: [],
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        localStorage.setItem('sidebarCollapsed', JSON.stringify(this.sidebarCollapsed));
+    }
+}">
+    <div class="flex h-screen bg-[--background] text-[--foreground] overflow-hidden">
         <!-- Sidebar -->
         @include('partials.sidebar')
 
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Nav (Optional if needed, otherwise use sidebar) -->
-            
-            <main class="flex-1 overflow-y-auto p-4 md:p-8">
-                @yield('content')
-            </main>
-
-            <!-- Mobile Nav -->
-            @include('partials.mobile-nav')
+        <div class="flex-1 min-w-0 overflow-y-auto pb-20 lg:pb-0">
+            @yield('content')
         </div>
+
+        <!-- Mobile Nav -->
+        @include('partials.mobile-nav')
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-50 flex flex-col gap-3 pointer-events-none">
+        @if(session('success'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" 
+                 class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transition-all"
+                 x-transition:enter="translate-x-full" x-transition:enter-end="translate-x-0"
+                 x-transition:leave="translate-x-full">
+                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                <div class="font-bold">{{ session('success') }}</div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" 
+                 class="bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transition-all"
+                 x-transition:enter="translate-x-full" x-transition:enter-end="translate-x-0"
+                 x-transition:leave="translate-x-full">
+                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                <div class="font-bold">{{ session('error') }}</div>
+            </div>
+        @endif
     </div>
 
     <script>
-      lucide.createIcons();
+        lucide.createIcons();
     </script>
+    @stack('scripts')
 </body>
 </html>

@@ -47,15 +47,17 @@ class OrderController extends Controller
     {
         $item = MenuItem::findOrFail($request->menu_item_id);
         
+        $userId = auth()->id() ?? 1;
+
         if ($request->has('room_session_id')) {
             $order = Order::firstOrCreate(
                 ['room_session_id' => $request->room_session_id, 'status' => 'open', 'order_type' => 'room'],
-                ['order_number' => 'RO-' . strtoupper(uniqid())]
+                ['order_number' => 'RO-' . strtoupper(uniqid()), 'user_id' => $userId]
             );
         } else {
             $order = Order::firstOrCreate(
                 ['order_type' => 'short', 'status' => 'open'],
-                ['order_number' => 'SO-' . strtoupper(uniqid())]
+                ['order_number' => 'SO-' . strtoupper(uniqid()), 'user_id' => $userId]
             );
         }
 
@@ -123,6 +125,7 @@ class OrderController extends Controller
             'payment_method' => $request->payment_method ?? 'cash',
             'amount_received' => $request->amount_received ?? $order->total_amount,
             'closed_at' => now(),
+            'user_id' => $order->user_id ?? (auth()->id() ?? 1),
         ]);
 
         return back()->with('success', 'Order completed successfully.');
