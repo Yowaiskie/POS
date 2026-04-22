@@ -61,12 +61,20 @@ class OrderController extends Controller
         if ($request->has('room_session_id')) {
             $order = Order::firstOrCreate(
                 ['room_session_id' => $request->room_session_id, 'status' => 'open', 'order_type' => 'room'],
-                ['order_number' => 'RO-' . strtoupper(uniqid()), 'user_id' => $userId]
+                [
+                    'order_number' => 'RO-' . strtoupper(uniqid()), 
+                    'user_id' => $userId,
+                    'transaction_id' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6))
+                ]
             );
         } else {
             $order = Order::firstOrCreate(
                 ['order_type' => 'short', 'status' => 'open'],
-                ['order_number' => 'SO-' . strtoupper(uniqid()), 'user_id' => $userId]
+                [
+                    'order_number' => 'SO-' . strtoupper(uniqid()), 
+                    'user_id' => $userId,
+                    'transaction_id' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6))
+                ]
             );
         }
 
@@ -213,6 +221,14 @@ class OrderController extends Controller
 
     public function checkout(Request $request)
     {
+        if ($request->payment_method === 'gcash') {
+            $request->validate([
+                'reference_number' => 'required|digits:13',
+            ], [
+                'reference_number.digits' => 'GCash Reference Number must be exactly 13 digits.',
+            ]);
+        }
+
         $order = Order::with('items.menuItem')
             ->where('order_type', 'short')
             ->where('status', 'open')

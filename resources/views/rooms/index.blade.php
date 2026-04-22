@@ -6,6 +6,7 @@
         showDetailModal: false,
         showOrdersModal: false,
         showBillOutModal: false,
+        showStartSessionModal: false,
         activeSession: null,
         activeRoom: null,
         selectedCategory: '{{ $categories->first()?->slug }}',
@@ -13,6 +14,11 @@
         transactionNumber: '',
         amountReceived: '',
         
+        openStartSessionModal(room) {
+            this.activeRoom = room;
+            this.showStartSessionModal = true;
+        },
+
         openDetailModal(room, session) {
             this.activeRoom = room;
             this.activeSession = session;
@@ -108,5 +114,6 @@
     @include('rooms.partials.room-detail-modal')
     @include('rooms.partials.orders-modal')
     @include('rooms.partials.bill-out-modal')
+    @include('rooms.partials.start-session-modal')
 </div>
 @endsection

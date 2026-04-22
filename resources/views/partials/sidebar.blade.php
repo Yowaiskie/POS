@@ -28,6 +28,7 @@
 
             if (auth()->check() && strtolower(auth()->user()->position) === 'admin') {
                 $navItems[] = ['route' => 'menu.index',       'icon' => 'utensils',    'label' => 'Menu'];
+                $navItems[] = ['route' => 'promo-sets.index', 'icon' => 'sparkles',    'label' => 'Promo Sets'];
                 $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
                 $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
                 $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
@@ -56,6 +57,22 @@
             </a>
         @endforeach
     </nav>
+
+    {{-- Realtime Clock --}}
+    <div class="px-4 py-3 bg-indigo-50/50 border-t border-[--border]" x-data="{ 
+            time: '', 
+            date: '',
+            updateClock() {
+                const now = new Date();
+                this.time = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                this.date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            }
+         }" x-init="updateClock(); setInterval(() => updateClock(), 1000)">
+        <div class="flex flex-col" :class="sidebarCollapsed ? 'items-center' : ''">
+            <div class="font-mono font-bold text-indigo-700 transition-all duration-300" :class="sidebarCollapsed ? 'text-[10px]' : 'text-sm'" x-text="time"></div>
+            <div x-show="!sidebarCollapsed" class="text-[10px] text-slate-500 font-medium" x-text="date"></div>
+        </div>
+    </div>
 
     {{-- User Info + Logout --}}
     <div class="border-t border-[--border] bg-gray-50 shrink-0 overflow-hidden transition-all duration-300"

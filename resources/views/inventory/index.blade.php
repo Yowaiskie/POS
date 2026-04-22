@@ -227,5 +227,10 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
+    <div class="mt-8">
+        {{ $items->links() }}
+    </div>
 </div>
 @endsection

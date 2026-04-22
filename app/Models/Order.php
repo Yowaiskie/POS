@@ -12,6 +12,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'transaction_id',
         'order_number',
         'order_type',
         'room_session_id',
@@ -21,6 +22,8 @@ class Order extends Model
         'amount_received',
         'reference_number',
         'closed_at',
+        'promo_name',
+        'promo_price',
     ];
 
     protected $casts = [

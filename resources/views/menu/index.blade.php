@@ -93,6 +93,11 @@
         @endforelse
     </div>
 
+    <!-- Pagination -->
+    <div class="mt-8">
+        {{ $items->links() }}
+    </div>
+
     <!-- Add/Edit Modal -->
     <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" x-show="showModal" x-transition x-cloak>
         <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full relative shadow-2xl" @click.away="showModal = false">

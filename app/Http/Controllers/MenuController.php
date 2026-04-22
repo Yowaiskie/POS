@@ -20,7 +20,7 @@ class MenuController extends Controller
             });
         }
 
-        $items = $itemsQuery->orderBy('name')->get();
+        $items = $itemsQuery->orderBy('name')->paginate(10)->withQueryString();
 
         return view('menu.index', [
             'categories'      => $categories,

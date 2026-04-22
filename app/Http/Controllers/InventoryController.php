@@ -21,7 +21,7 @@ class InventoryController extends Controller
             });
         }
 
-        $items = $itemsQuery->get();
+        $items = $itemsQuery->paginate(10)->withQueryString();
 
         $stats = [
             'total'        => MenuItem::count(),

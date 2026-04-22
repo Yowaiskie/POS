@@ -8,7 +8,14 @@
         <h2 class="text-2xl md:text-3xl mb-6 font-bold text-center">Bill Out</h2>
 
         <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 mb-6 text-center">
-            <div class="text-lg font-semibold text-gray-600 mb-2" x-text="activeRoom ? activeRoom.name : ''"></div>
+            <div class="text-lg font-semibold text-gray-600 mb-1" x-text="activeRoom ? activeRoom.name : ''"></div>
+            <template x-if="activeSession && activeSession.orders && activeSession.orders.length > 0">
+                <div class="mb-3">
+                    <span class="text-[10px] font-mono bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">
+                        POS ID: <span x-text="activeSession.orders[0].transaction_id"></span>
+                    </span>
+                </div>
+            </template>
             <div class="text-5xl font-bold text-[#6366f1] mb-2" x-text="'₱' + totalAmount.toLocaleString()"></div>
             <div class="text-sm text-gray-500 font-medium">Total Amount Due</div>
         </div>
@@ -75,17 +82,21 @@
 
         <div x-show="paymentMethod === 'gcash'">
             <div class="mb-6">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">G-Cash Transaction Number</label>
-                <input type="text" x-model="transactionNumber" placeholder="Enter transaction number" 
+                <label class="block text-sm font-semibold text-slate-700 mb-2">GCash Reference Number</label>
+                <input type="text" x-model="transactionNumber" 
+                       maxlength="13"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                       placeholder="Enter 13-digit Ref #" 
                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none text-lg">
+                <p class="mt-1 text-xs text-slate-500">Provided by the customer from their GCash app</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <button @click="paymentMethod = null" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 active:scale-95 transition-all font-medium">Back</button>
                 <form :action="`{{ url('rooms/sessions') }}/${activeSession ? activeSession.id : ''}/bill-out`" method="POST">
                     @csrf
                     <input type="hidden" name="payment_method" value="gcash">
-                    <input type="hidden" name="transaction_id" :value="transactionNumber">
-                    <button type="submit" :disabled="!transactionNumber.trim()" 
+                    <input type="hidden" name="reference_number" :value="transactionNumber">
+                    <button type="submit" :disabled="transactionNumber.length !== 13" 
                             class="w-full px-6 py-3 bg-[#ec4899] text-white rounded-lg hover:bg-[#db2777] active:scale-95 transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                         Bill Out
                     </button>

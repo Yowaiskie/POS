@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\PromoSetController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InventoryController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\UserController;
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::get('/logout', [AuthController::class, 'logout']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -42,8 +44,16 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{item}', [MenuController::class, 'destroy'])->name('destroy');
     });
 
+    Route::prefix('promo-sets')->name('promo-sets.')->middleware('role:admin')->group(function () {
+        Route::get('/', [PromoSetController::class, 'index'])->name('index');
+        Route::post('/', [PromoSetController::class, 'store'])->name('store');
+        Route::put('/{promoSet}', [PromoSetController::class, 'update'])->name('update');
+        Route::delete('/{promoSet}', [PromoSetController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('reports')->name('reports.')->middleware('role:admin')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/pdf', [ReportController::class, 'pdf'])->name('pdf');
     });
 
     Route::prefix('inventory')->name('inventory.')->middleware('role:admin')->group(function () {

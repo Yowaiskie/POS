@@ -91,12 +91,9 @@
 
     <div class="grid grid-cols-1 gap-2.5 mt-auto">
         @if($status === 'available')
-            <form action="{{ route('rooms.start-session', $room) }}" method="POST">
-                @csrf
-                <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-600 active:scale-98 transition-all font-semibold shadow-md hover:shadow-lg">
-                    Start Session
-                </button>
-            </form>
+            <button @click='openStartSessionModal(@json($room))' class="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-600 active:scale-98 transition-all font-semibold shadow-md hover:shadow-lg">
+                Start Session
+            </button>
         @else
             <button @click='openDetailModal(@json($room), @json($session))' 
                     class="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-600 active:scale-98 transition-all font-semibold shadow-md hover:shadow-lg">

@@ -8,12 +8,19 @@
     </div>
 
     <!-- Period Selector -->
-    <div class="flex gap-3 mb-8">
-        @foreach(['daily', 'weekly', 'monthly'] as $p)
-            <a href="{{ route('reports.index', ['period' => $p]) }}" class="px-6 py-3 rounded-lg font-semibold transition-all capitalize {{ $p === $period ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-400' }}">
-                {{ $p }}
-            </a>
-        @endforeach
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div class="flex gap-3">
+            @foreach(['daily', 'weekly', 'monthly'] as $p)
+                <a href="{{ route('reports.index', ['period' => $p]) }}" class="px-6 py-3 rounded-lg font-semibold transition-all capitalize {{ $p === $period ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-400' }}">
+                    {{ $p }}
+                </a>
+            @endforeach
+        </div>
+
+        <a href="{{ route('reports.pdf', ['period' => $period]) }}" class="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg">
+            <i data-lucide="file-down" class="w-5 h-5"></i>
+            Download PDF Report
+        </a>
     </div>
 
     <!-- Sales Overview -->
@@ -141,6 +148,92 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="mb-10">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></div>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Recent Transactions</h2>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden" style="box-shadow: var(--shadow-md)">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-slate-700">POS Transaction ID</th>
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-slate-700">Type / Promo</th>
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-slate-700">Payment</th>
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-slate-700">Staff Name</th>
+                        <th class="text-center px-6 py-4 text-sm font-semibold text-slate-700">Date & Time</th>
+                        <th class="text-right px-6 py-4 text-sm font-semibold text-slate-700">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($recentOrders as $order)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
+                                    {{ $order->transaction_id ?? $order->order_number ?? 'N/A' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($order->promo_name)
+                                    <span class="inline-flex items-center gap-1 text-sm font-bold text-emerald-600">
+                                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                        {{ $order->promo_name }}
+                                    </span>
+                                @else
+                                    <span class="text-sm font-medium text-slate-600 capitalize">
+                                        {{ $order->order_type }} Order
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($order->payment_method === 'gcash')
+                                    <div class="flex flex-col gap-1">
+                                        <span class="inline-flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit">
+                                            <i data-lucide="smartphone" class="w-3 h-3"></i>
+                                            GCash
+                                        </span>
+                                        @if($order->reference_number)
+                                            <span class="text-xs font-mono font-bold text-slate-600">Ref: {{ $order->reference_number }}</span>
+                                        @else
+                                            <span class="text-[10px] font-mono text-slate-400 italic">No Ref recorded</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                        <i data-lucide="banknote" class="w-3 h-3"></i>
+                                        Cash
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                        {{ substr($order->user->name ?? 'S', 0, 1) }}
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-700">{{ $order->user->name ?? 'System' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center text-sm text-slate-500">
+                                {{ $order->closed_at ? $order->closed_at->format('M d, Y h:i A') : 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-slate-900">
+                                ₱{{ number_format($order->total_amount) }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td class="px-6 py-4 text-center text-slate-400" colspan="4">No transactions found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50">
+            {{ $recentOrders->links() }}
         </div>
     </div>
 </div>

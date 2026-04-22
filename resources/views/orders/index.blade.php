@@ -17,6 +17,7 @@
     showCheckout: false,
     paymentMethod: "cash",
     amountReceived: 0,
+    gcashRef: "",
     cart: {
         items: @json($cartData),
         total: {{ (float)$activeOrderTotal }},
@@ -194,8 +195,13 @@
                 <i data-lucide="shopping-cart" class="w-5 h-5 md:w-6 md:h-6 text-[--neon-violet]"></i>
                 <h2 class="text-xl md:text-2xl font-semibold">Order Summary</h2>
             </div>
-            <div class="text-sm text-[--muted-foreground]">
-                <span x-text="cart.items.length"></span> items selected
+            <div class="text-sm text-[--muted-foreground] flex justify-between items-center">
+                <span><span x-text="cart.items.length"></span> items selected</span>
+                @if($activeOrder)
+                    <span class="font-mono text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100">
+                        {{ $activeOrder->transaction_id }}
+                    </span>
+                @endif
             </div>
         </div>
 
@@ -286,7 +292,7 @@
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="payment_method" value="gcash" x-model="paymentMethod" class="sr-only peer">
-                                <div class="px-4 py-3 rounded-xl font-bold transition-all text-center border-2 border-slate-100 text-slate-500 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-lg">G-Cash</div>
+                                <div class="px-4 py-3 rounded-xl font-bold transition-all text-center border-2 border-slate-100 text-slate-500 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-lg">GCash</div>
                             </label>
                         </div>
                     </div>
@@ -306,15 +312,22 @@
 
                     <div x-show="paymentMethod === 'gcash'" x-transition>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Reference Number</label>
-                            <input type="text" name="reference_number" :required="paymentMethod === 'gcash'" placeholder="Enter G-Cash Ref #" class="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:outline-none transition-all font-bold text-slate-700">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">GCash Reference Number</label>
+                            <input type="text" name="reference_number" 
+                                   x-model="gcashRef"
+                                   maxlength="13"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                   :required="paymentMethod === 'gcash'" 
+                                   placeholder="Enter 13-digit Ref #" 
+                                   class="w-full px-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 focus:outline-none transition-all font-bold text-slate-700">
+                            <p class="px-1 text-[10px] text-slate-400">Ask the customer for the reference number in their GCash app</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex gap-3 mt-8">
                     <button type="button" @click="showCheckout = false" class="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 active:scale-95 transition-all font-bold">Cancel</button>
-                    <button type="submit" :disabled="paymentMethod === 'cash' && (amountReceived < total || total <= 0)" class="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-95 transition-all font-black shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Complete</button>
+                    <button type="submit" :disabled="(paymentMethod === 'cash' && (amountReceived < total || total <= 0)) || (paymentMethod === 'gcash' && gcashRef.length !== 13)" class="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-95 transition-all font-black shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Complete</button>
                 </div>
             </form>
         </div>
