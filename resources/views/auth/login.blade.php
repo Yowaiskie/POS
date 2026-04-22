@@ -24,10 +24,9 @@
     <div class="w-full max-w-md p-6 relative z-10">
         <div class="glass-panel rounded-2xl p-8">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg mb-4 text-white">
-                    <i data-lucide="music" class="w-8 h-8"></i>
+                <div class="mb-6">
+                    <img src="{{ asset('images/logo.png') }}" alt="BOSSTON Logo" class="mx-auto w-32 h-32 object-cover rounded-full border-4 border-white shadow-2xl ring-4 ring-indigo-50">
                 </div>
-                <h1 class="text-3xl tracking-tight font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">BOSSTON</h1>
                 <p class="text-sm text-gray-500 mt-1">KTV Management System</p>
             </div>
 

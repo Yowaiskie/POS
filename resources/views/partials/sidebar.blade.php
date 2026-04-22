@@ -5,9 +5,8 @@
     {{-- Header --}}
     <div class="h-16 px-3 border-b border-[--border] flex items-center bg-gradient-to-b from-white to-gray-50 shrink-0"
          :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-4'">
-        <div x-show="!sidebarCollapsed" x-transition:leave="transition duration-100" x-transition:leave-end="opacity-0 scale-95" class="overflow-hidden">
-            <div class="text-xl tracking-tight font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">BOSSTON</div>
-            <div class="text-[10px] text-[--muted-foreground] font-medium whitespace-nowrap">KTV Management System</div>
+        <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="overflow-hidden">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-10 w-10 object-cover rounded-full border border-gray-200">
         </div>
         <button @click="toggleSidebar()"
                 class="p-2 hover:bg-gray-100 rounded-lg transition-all active:scale-95 shrink-0"
@@ -28,9 +27,10 @@
             ];
 
             if (auth()->check() && strtolower(auth()->user()->position) === 'admin') {
-                $navItems[] = ['route' => 'menu.index',    'icon' => 'utensils',  'label' => 'Menu'];
-                $navItems[] = ['route' => 'reports.index', 'icon' => 'bar-chart-2','label' => 'Reports'];
-                $navItems[] = ['route' => 'users.index',   'icon' => 'users',     'label' => 'User Management'];
+                $navItems[] = ['route' => 'menu.index',       'icon' => 'utensils',    'label' => 'Menu'];
+                $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
+                $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
+                $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
             }
 
             $navItems[] = ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'];

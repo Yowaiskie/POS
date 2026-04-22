@@ -1,5 +1,5 @@
 <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-[--sidebar] border-t border-[--border] z-40 safe-area-inset-bottom">
-    <div class="grid grid-cols-4 gap-1 p-2">
+    <div class="grid grid-cols-3 gap-1 p-2">
         @php
             $navItems = [
                 ['route' => 'dashboard', 'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
@@ -8,8 +8,9 @@
             ];
             
             if (auth()->check() && strtolower(auth()->user()->position) === 'admin') {
-                $navItems[] = ['route' => 'reports.index', 'icon' => 'file-text', 'label' => 'Reports'];
-                $navItems[] = ['route' => 'users.index', 'icon' => 'users', 'label' => 'Users'];
+                $navItems[] = ['route' => 'inventory.index', 'icon' => 'package',     'label' => 'Inventory'];
+                $navItems[] = ['route' => 'reports.index',   'icon' => 'file-text',   'label' => 'Reports'];
+                $navItems[] = ['route' => 'users.index',     'icon' => 'users',       'label' => 'Users'];
             }
         @endphp
 
