@@ -1,14 +1,28 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-[1600px] mx-auto">
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto" x-data="{ 
+    showModal: false, 
+    editingItem: null,
+    formData: { name: '', price: '', category_id: '' },
+    openAddModal() {
+        this.editingItem = null;
+        this.formData = { name: '', price: '', category_id: '{{ $categories->first()?->id }}' };
+        this.showModal = true;
+    },
+    openEditModal(item) {
+        this.editingItem = item;
+        this.formData = { name: item.name, price: item.price, category_id: item.category_id };
+        this.showModal = true;
+    }
+}">
     <div class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
                 <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Menu Management</h1>
                 <p class="text-slate-600">Manage your products, packages, and pricing</p>
             </div>
-            <button class="px-6 py-3 bg-[#10b981] text-white rounded-lg hover:bg-[#059669] active:scale-95 transition-all shadow-md font-medium flex items-center gap-2 w-full sm:w-auto justify-center">
+            <button @click="openAddModal()" class="px-6 py-3 bg-[#10b981] text-white rounded-lg hover:bg-[#059669] active:scale-95 transition-all shadow-md font-medium flex items-center gap-2 w-full sm:w-auto justify-center">
                 <i data-lucide="plus" class="w-5 h-5"></i>
                 Add Item
             </button>
@@ -33,7 +47,7 @@
                     {{ $item->category?->name ?? 'Uncategorized' }}
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button class="flex-1 px-4 py-2 bg-[#6366f1] text-white rounded-lg hover:bg-[#5558e3] active:scale-95 transition-all shadow-sm text-sm font-medium">
+                    <button @click='openEditModal(@json($item))' class="flex-1 px-4 py-2 bg-[#6366f1] text-white rounded-lg hover:bg-[#5558e3] active:scale-95 transition-all shadow-sm text-sm font-medium">
                         Edit
                     </button>
                     <form action="{{ route('menu.destroy', $item) }}" method="POST" onsubmit="return confirm('Are you sure?')">
@@ -45,10 +59,58 @@
                     </form>
                 </div>
             </div>
-        @empty            <div class="bg-white rounded-xl border-2 border-dashed border-slate-200 p-6 text-center text-slate-500 col-span-full">
+        @empty
+            <div class="bg-white rounded-xl border-2 border-dashed border-slate-200 p-6 text-center text-slate-500 col-span-full">
                 No menu items available.
             </div>
         @endforelse
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" x-show="showModal" x-transition x-cloak>
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full relative shadow-2xl" @click.away="showModal = false">
+            <button @click="showModal = false" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <h2 class="text-2xl font-bold text-slate-900 mb-6" x-text="editingItem ? 'Edit Item' : 'Add New Item'"></h2>
+
+            <form :action="editingItem ? `{{ url('menu') }}/${editingItem.id}` : '{{ route('menu.store') }}'" method="POST">
+                @csrf
+                <template x-if="editingItem">
+                    @method('PUT')
+                </template>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Item Name</label>
+                        <input type="text" name="name" x-model="formData.name" required placeholder="Enter item name" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Price</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 font-semibold">₱</span>
+                            <input type="number" name="price" x-model="formData.price" required placeholder="0" class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                        <select name="category_id" x-model="formData.category_id" required class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none">
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" @click="showModal = false" class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 active:scale-95 transition-all font-medium">Cancel</button>
+                    <button type="submit" class="flex-1 px-6 py-3 bg-[#6366f1] text-white rounded-lg hover:bg-[#5558e3] active:scale-95 transition-all shadow-md font-medium" x-text="editingItem ? 'Save Changes' : 'Add Item'"></button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
