@@ -29,10 +29,13 @@
     async submitForm(e) {
         const form = e.target;
         const formData = new FormData(form);
-        
+        await this.postData(form.action, formData);
+    },
+
+    async postData(url, formData) {
         try {
-            const response = await fetch(form.action, {
-                method: form.method,
+            const response = await fetch(url, {
+                method: "POST",
                 body: formData,
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
@@ -55,6 +58,13 @@
         }
     },
 
+    async setQuantity(itemId, qty) {
+        const formData = new FormData();
+        formData.append("_token", "{{ csrf_token() }}");
+        formData.append("quantity", qty);
+        await this.postData(`{{ url('orders/update-quantity') }}/${itemId}`, formData);
+    },
+
     isMaxed(itemId, stockQty) {
         if (stockQty === null) return false;
         const inCart = this.cart.items.find(i => i.menu_item_id === itemId);
@@ -72,6 +82,10 @@
     <div class="w-full lg:w-48 bg-[--sidebar] border-b lg:border-b-0 lg:border-r border-[--border] p-4 shrink-0">
         <h2 class="text-sm text-[--muted-foreground] mb-4 px-2 hidden lg:block">Categories</h2>
         <div class="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
+            <a href="{{ route('orders.index', ['category' => 'all']) }}" class="flex-shrink-0 lg:w-full p-3 md:p-4 rounded-lg text-left transition-all active:scale-95 font-medium {{ $selectedCategory === 'all' ? 'bg-[#6366f1] text-white shadow-md' : 'bg-white border-2 border-gray-200 hover:bg-gray-50' }}">
+                <div class="text-2xl mb-1">📋</div>
+                <div class="text-xs md:text-sm">All Items</div>
+            </a>
             @foreach($categories as $cat)
                 <a href="{{ route('orders.index', ['category' => $cat->slug]) }}" class="flex-shrink-0 lg:w-full p-3 md:p-4 rounded-lg text-left transition-all active:scale-95 font-medium {{ $selectedCategory === $cat->slug ? 'bg-[#6366f1] text-white shadow-md' : 'bg-white border-2 border-gray-200 hover:bg-gray-50' }}">
                     <div class="text-2xl mb-1">{{ $cat->icon }}</div>
@@ -203,7 +217,10 @@
                                 <i data-lucide="minus" class="w-4 h-4"></i>
                             </button>
                         </form>
-                        <div class="flex-1 text-center font-bold text-lg" x-text="item.quantity"></div>
+                        <input type="number" min="1" 
+                               :value="item.quantity" 
+                               @change="setQuantity(item.id, $event.target.value)"
+                               class="flex-1 text-center font-bold text-lg border-2 border-gray-200 rounded-lg py-1 focus:border-[#6366f1] focus:outline-none">
                         <form :action="`{{ url('orders/update-quantity') }}/${item.id}`" method="POST" @submit.prevent="submitForm">
                             @csrf
                             <input type="hidden" name="delta" value="1">

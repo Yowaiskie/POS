@@ -13,10 +13,10 @@ class OrderController extends Controller
     public function index()
     {
         $categories = MenuCategory::orderBy('id')->get();
-        $selectedCategory = request('category', $categories->first()?->slug);
+        $selectedCategory = request('category', 'all');
 
         $itemsQuery = MenuItem::with('category')->where('is_active', true);
-        if ($selectedCategory) {
+        if ($selectedCategory !== 'all') {
             $itemsQuery->whereHas('category', function ($query) use ($selectedCategory) {
                 $query->where('slug', $selectedCategory);
             });
@@ -110,8 +110,14 @@ class OrderController extends Controller
 
     public function updateQuantity(Request $request, OrderItem $item)
     {
-        $delta    = $request->delta ?? 0;
-        $quantity = $item->quantity + $delta;
+        if ($request->has('quantity')) {
+            $quantity = (int)$request->quantity;
+            $delta = $quantity - $item->quantity;
+        } else {
+            $delta    = $request->delta ?? 0;
+            $quantity = $item->quantity + $delta;
+        }
+
         $order    = $item->order;
 
         // When increasing, check available stock
@@ -234,11 +240,12 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'status'          => 'paid',
-            'payment_method'  => $request->payment_method ?? 'cash',
-            'amount_received' => $request->amount_received ?? $order->total_amount,
-            'closed_at'       => now(),
-            'user_id'         => $order->user_id ?? (auth()->id() ?? 1),
+            'status'           => 'paid',
+            'payment_method'   => $request->payment_method ?? 'cash',
+            'amount_received'  => $request->amount_received ?? $order->total_amount,
+            'reference_number' => $request->reference_number,
+            'closed_at'        => now(),
+            'user_id'          => $order->user_id ?? (auth()->id() ?? 1),
         ]);
 
         return back()->with('success', 'Order completed successfully.');
