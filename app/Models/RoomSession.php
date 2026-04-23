@@ -13,6 +13,7 @@ class RoomSession extends Model
     protected $fillable = [
         'room_id',
         'status',
+        'promo_duration_hours',
         'started_at',
         'ends_at',
     ];

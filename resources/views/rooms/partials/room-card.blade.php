@@ -1,16 +1,70 @@
 @php
     $session = $room->activeSession;
     $status = $session?->status ?? 'available';
-    $bill = $session ? $session->orders->sum('total_amount') : 0;
+    $foodTotal = $session ? $session->orders->sum('total_amount') : 0;
 @endphp
 
 <div class="rounded-xl border transition-all duration-200 hover:shadow-xl hover:-translate-y-1 h-full flex flex-col p-6"
      style="box-shadow: var(--shadow)"
      x-data="{ 
+        startTime: '{{ $session?->started_at?->toIso8601String() }}',
         endTime: '{{ $session?->ends_at?->toIso8601String() }}',
+        promoDuration: {{ $session?->promo_duration_hours ?? 0 }},
+        foodTotal: {{ $foodTotal }},
         timer: '00:00:00',
         status: '{{ $status }}',
         isOvertime: false,
+        
+        get currentRoomCharge() {
+            if (!this.startTime || !this.endTime) return 0;
+            
+            // Access pricingConfig from parent scope
+            const config = pricingConfig;
+            
+            const start = new Date(this.startTime);
+            const reservedEnd = new Date(this.endTime);
+            const now = new Date();
+            
+            const effectiveEnd = now > reservedEnd ? now : reservedEnd;
+            const diffMs = effectiveEnd - start;
+            let totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
+            
+            // Subtract promo duration
+            if (this.promoDuration > 0) {
+                totalMinutes = Math.max(0, totalMinutes - (this.promoDuration * 60));
+            }
+            
+            if (totalMinutes <= (config.grace_period_minutes || 10)) return 0;
+            
+            const fullHours = Math.floor(totalMinutes / 60);
+            const remainingMinutes = totalMinutes % 60;
+            
+            let charge = fullHours * parseFloat(config.price_60_min);
+            
+            if (remainingMinutes > 0) {
+                if (remainingMinutes >= 30) {
+                    let min30 = parseFloat(config.price_30_min);
+                    const otAfter30 = remainingMinutes - 30;
+                    if (otAfter30 > 0) {
+                        const units = Math.ceil(otAfter30 / config.overtime_unit_minutes);
+                        const otCharge = units * parseFloat(config.overtime_unit_price);
+                        charge += Math.min(min30 + otCharge, parseFloat(config.price_60_min));
+                    } else {
+                        charge += min30;
+                    }
+                } else {
+                    const units = Math.ceil(remainingMinutes / config.overtime_unit_minutes);
+                    const otCharge = units * parseFloat(config.overtime_unit_price);
+                    charge += Math.min(otCharge, parseFloat(config.price_30_min));
+                }
+            }
+            return charge;
+        },
+
+        get totalBill() {
+            return this.foodTotal + this.currentRoomCharge;
+        },
+
         updateTimer() {
             if (!this.endTime) return;
             const end = new Date(this.endTime);
@@ -22,6 +76,7 @@
             const m = Math.floor((absDiff % 3600) / 60);
             const s = Math.floor(absDiff % 60);
             this.timer = [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+            
             if (this.isOvertime) this.status = 'overtime';
             else if (diff <= 600000) this.status = 'warning';
             else this.status = 'active';
@@ -58,7 +113,7 @@
         @if($status !== 'available')
         <div class="text-right bg-white px-4 py-2 rounded-lg border border-slate-200" style="box-shadow: var(--shadow-sm)">
             <div class="text-xs text-slate-500 font-medium">Current Bill</div>
-            <div class="text-xl font-bold text-indigo-600">₱{{ number_format($bill) }}</div>
+            <div class="text-xl font-bold text-indigo-600" x-text="'₱' + Math.floor(totalBill).toLocaleString()"></div>
         </div>
         @endif
     </div>

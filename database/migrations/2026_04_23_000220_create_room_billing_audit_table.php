@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('room_billing_audit', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('room_session_id')->constrained('room_sessions')->cascadeOnDelete();
+            $table->decimal('room_charge', 10, 2);
+            $table->json('pricing_snapshot');
+            $table->json('billing_breakdown');
+            $table->timestamp('recorded_at')->useCurrent();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('room_billing_audit');
+    }
+};
