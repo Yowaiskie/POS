@@ -31,6 +31,7 @@
                 $navItems[] = ['route' => 'promo-sets.index', 'icon' => 'sparkles',    'label' => 'Promo Sets'];
                 $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
                 $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
+                $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
                 $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
             }
 

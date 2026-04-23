@@ -9,6 +9,7 @@ use App\Http\Controllers\PromoSetController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\Admin\RoomPricingController;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -23,9 +24,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('rooms')->name('rooms.')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('index');
-        Route::post('/{room}/start', [RoomController::class, 'startSession'])->name('start-session');
-        Route::post('/sessions/{session}/extend', [RoomController::class, 'extendSession'])->name('extend-session');
-        Route::post('/sessions/{session}/bill-out', [RoomController::class, 'billOut'])->name('bill-out');
+        Route::match(['get', 'post'], '/{room}/start', [RoomController::class, 'startSession'])->name('start-session');
+        Route::match(['get', 'post'], '/sessions/{session}/extend', [RoomController::class, 'extendSession'])->name('extend-session');
+        Route::match(['get', 'post'], '/sessions/{session}/bill-out', [RoomController::class, 'billOut'])->name('bill-out');
     });
 
     Route::prefix('orders')->name('orders.')->group(function () {
@@ -67,6 +68,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('admin/room-pricing')->name('admin.room_pricing.')->middleware('role:admin')->group(function () {
+        Route::get('/', [RoomPricingController::class, 'index'])->name('index');
+        Route::get('/edit', [RoomPricingController::class, 'edit'])->name('edit');
+        Route::put('/update', [RoomPricingController::class, 'update'])->name('update');
     });
 
     Route::prefix('profile')->name('profile.')->group(function () {
