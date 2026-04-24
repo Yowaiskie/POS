@@ -18,6 +18,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middl
 Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 Route::get('/logout', [AuthController::class, 'logout']);
+Route::post('/verify-pin', [AuthController::class, 'verifyPin'])->name('verify-pin')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
         Route::post('/add-item', [OrderController::class, 'addItem'])->name('add-item');
         Route::post('/update-quantity/{item}', [OrderController::class, 'updateQuantity'])->name('update-quantity');
-        Route::post('/remove-item/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
+        Route::delete('/remove-item/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
         Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
         Route::post('/clear', [OrderController::class, 'clear'])->name('clear');
     });
@@ -80,5 +81,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
         Route::patch('/update', [ProfileController::class, 'update'])->name('update');
         Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password');
+        Route::patch('/pin', [ProfileController::class, 'updatePin'])->name('pin');
     });
 });

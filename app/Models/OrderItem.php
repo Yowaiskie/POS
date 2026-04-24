@@ -16,11 +16,18 @@ class OrderItem extends Model
         'name',
         'unit_price',
         'quantity',
+        'is_stock_deducted',
+        'is_voided',
+        'voided_at',
+        'voided_by',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'quantity' => 'integer',
+        'is_stock_deducted' => 'boolean',
+        'is_voided' => 'boolean',
+        'voided_at' => 'datetime',
     ];
 
     public function order(): BelongsTo

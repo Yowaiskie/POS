@@ -63,8 +63,10 @@ document.addEventListener('alpine:init', () => {
         showOrdersModal: false,
         showBillOutModal: false,
         showStartSessionModal: false,
+        isProcessing: false,
         activeSession: null,
         activeRoom: null,
+        isUnlocked: false,
         selectedCategory: '{{ $categories->first()?->slug }}',
         paymentMethod: null,
         transactionNumber: '',
@@ -112,6 +114,100 @@ document.addEventListener('alpine:init', () => {
             this.transactionNumber = '';
             this.amountReceived = '';
             this.showBillOutModal = true;
+        },
+
+        async submitOrderForm(e) {
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update the active session with new order data
+                    this.activeSession = data.session;
+                    // Refresh icons after DOM update
+                    this.$nextTick(() => {
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    });
+                } else {
+                    alert(data.message || 'Error adding item');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        },
+
+        async updateItemQuantity(item, newQty) {
+            newQty = parseInt(newQty);
+            if (isNaN(newQty) || newQty < 1) return;
+            
+            const currentQty = parseInt(item.quantity);
+            
+            // If already unlocked, just submit
+            if (this.isUnlocked || newQty > currentQty) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url('orders/update-quantity') }}/${item.id}`;
+                
+                const token = document.createElement('input');
+                token.type = 'hidden'; token.name = '_token'; token.value = '{{ csrf_token() }}';
+                form.appendChild(token);
+                
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; qtyInput.value = newQty;
+                form.appendChild(qtyInput);
+
+                // If unlocked, we might still need an admin_id for the audit log
+                // Let's just pass a flag or a dummy if needed, or update backend to assume auth
+                const adminInput = document.createElement('input');
+                adminInput.type = 'hidden'; adminInput.name = 'admin_id'; adminInput.value = '1';
+                form.appendChild(adminInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+                return;
+            }
+
+            // Otherwise, ask for PIN
+            this.openPinModal(async (adminId) => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url('orders/update-quantity') }}/${item.id}`;
+                
+                const token = document.createElement('input');
+                token.type = 'hidden'; token.name = '_token'; token.value = '{{ csrf_token() }}';
+                form.appendChild(token);
+                
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; qtyInput.value = newQty;
+                form.appendChild(qtyInput);
+
+                const adminInput = document.createElement('input');
+                adminInput.type = 'hidden'; adminInput.name = 'admin_id'; adminInput.value = adminId;
+                form.appendChild(adminInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            });
+        },
+
+        unlockManagerMode() {
+            this.openPinModal((adminId) => {
+                this.isUnlocked = true;
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                });
+            });
         },
 
         get roomBilling() {

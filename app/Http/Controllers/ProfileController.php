@@ -58,5 +58,18 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Password updated successfully.');
     }
+
+    public function updatePin(Request $request)
+    {
+        $request->validate([
+            'admin_pin' => ['required', 'string', 'digits_between:4,6'],
+        ]);
+
+        Auth::user()->update([
+            'admin_pin' => $request->admin_pin
+        ]);
+
+        return back()->with('success', 'Security PIN updated successfully.');
+    }
 }
 

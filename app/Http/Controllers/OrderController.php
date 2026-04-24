@@ -6,10 +6,21 @@ use App\Models\MenuCategory;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\OrderFlowService;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    protected $orderFlowService;
+    protected $inventoryService;
+
+    public function __construct(OrderFlowService $orderFlowService, InventoryService $inventoryService)
+    {
+        $this->orderFlowService = $orderFlowService;
+        $this->inventoryService = $inventoryService;
+    }
+
     public function index()
     {
         $categories = MenuCategory::orderBy('id')->get();
@@ -89,14 +100,20 @@ class OrderController extends Controller
         }
 
         if ($orderItem) {
+            $this->inventoryService->adjustStock($orderItem, $orderItem->quantity + 1);
             $orderItem->increment('quantity');
         } else {
-            $order->items()->create([
+            $orderItem = $order->items()->create([
                 'menu_item_id' => $item->id,
                 'name'         => $item->name,
                 'quantity'     => 1,
                 'unit_price'   => $item->price,
             ]);
+
+            // [NEW] Immediate deduction for Room Orders
+            if ($order->order_type === 'room') {
+                $this->inventoryService->deductStock($orderItem);
+            }
         }
 
         $redirect = back()->with('success', "Added {$item->name} to cart.");
@@ -106,11 +123,29 @@ class OrderController extends Controller
         }
 
         if ($request->wantsJson()) {
-            return response()->json([
+            $data = [
                 'success' => true,
                 'message' => "Added {$item->name} to cart.",
-                'cart' => $this->getCartData()
-            ]);
+                'cart'    => $this->getCartData()
+            ];
+
+            if ($order->room_session_id) {
+                $session = \App\Models\RoomSession::with(['room', 'orders.items.menuItem'])->find($order->room_session_id);
+                
+                // Calculate dynamic totals using Billing Service
+                $billingService = app(\App\Services\RoomBillingService::class);
+                $pricingSnapshot = $session->pricing_snapshot ? json_decode($session->pricing_snapshot) : null;
+                $chargeResult = $billingService->calculateCharge($session, $pricingSnapshot);
+                
+                $foodTotal = $session->orders->where('status', 'active')->sum(fn($o) => $o->items->sum(fn($i) => $i->unit_price * $i->quantity));
+                $session->food_total = $foodTotal;
+                $session->room_charge = $chargeResult['charge'];
+                $session->total_amount = $session->room_charge + $foodTotal;
+                
+                $data['session'] = $session;
+            }
+
+            return response()->json($data);
         }
 
         return $redirect;
@@ -120,55 +155,76 @@ class OrderController extends Controller
     {
         if ($request->has('quantity')) {
             $quantity = (int)$request->quantity;
-            $delta = $quantity - $item->quantity;
         } else {
             $delta    = $request->delta ?? 0;
             $quantity = $item->quantity + $delta;
         }
 
-        $order    = $item->order;
+        $currentQty = $item->quantity;
 
-        // When increasing, check available stock
-        if ($delta > 0 && $item->menuItem) {
-            $menuItem = $item->menuItem;
-            if ($menuItem->stock_quantity !== null && $quantity > $menuItem->stock_quantity) {
-                $errorMsg = "Not enough stock for \"{$menuItem->name}\". Only {$menuItem->stock_quantity} available.";
-                if ($request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
-                }
-                $redirect = back()->with('error', $errorMsg);
-                if ($order && $order->room_session_id) {
-                    $redirect->with('open_modal_for_session', $order->room_session_id);
-                }
-                return $redirect;
-            }
-        }
-
+        // If zero or less, treat as removal
         if ($quantity <= 0) {
-            $item->delete();
-        } else {
+            return $this->removeItem($request, $item);
+        }
+
+        $order = $item->order;
+
+        try {
+            $updateUser = auth()->user();
+            if ($request->has('admin_id')) {
+                $updateUser = \App\Models\User::find($request->admin_id) ?? $updateUser;
+            }
+
+            // If decreasing and already deducted, only admin can authorize
+            if ($quantity < currentQty && $item->is_stock_deducted) {
+                if ($updateUser->position !== 'Admin') {
+                    return back()->with('error', 'Only Admin can authorize quantity reduction for committed items.');
+                }
+            }
+
+            // Adjust stock via service
+            $this->inventoryService->adjustStock($item, $quantity);
+
             $item->update(['quantity' => $quantity]);
-        }
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'cart' => $this->getCartData()
-            ]);
-        }
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'cart' => $this->getCartData()
+                ]);
+            }
 
-        $redirect = back();
-        if ($order && $order->room_session_id) {
-            $redirect->with('open_modal_for_session', $order->room_session_id);
+            $redirect = back();
+            if ($order && $order->room_session_id) {
+                $redirect->with('open_modal_for_session', $order->room_session_id);
+            }
+            return $redirect->with('success', 'Quantity updated successfully.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+            return back()->with('error', $e->getMessage());
         }
-
-        return $redirect;
     }
 
-    public function removeItem(OrderItem $item)
+    public function removeItem(Request $request, OrderItem $item)
     {
         $order = $item->order;
-        $item->delete();
+        
+        try {
+            // If it's already deducted, we treat 'remove' as 'void'
+            if ($item->is_stock_deducted) {
+                $voidUser = auth()->user();
+                if (request()->has('admin_id')) {
+                    $voidUser = \App\Models\User::find(request()->admin_id) ?? $voidUser;
+                }
+                $this->inventoryService->voidItem($item, $voidUser);
+            } else {
+                $item->delete();
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         if (request()->wantsJson()) {
             return response()->json([
@@ -183,6 +239,20 @@ class OrderController extends Controller
         }
 
         return $redirect;
+    }
+
+    public function voidItem(OrderItem $item)
+    {
+        try {
+            $voidUser = auth()->user();
+            if (request()->has('admin_id')) {
+                $voidUser = \App\Models\User::find(request()->admin_id) ?? $voidUser;
+            }
+            $this->inventoryService->voidItem($item, $voidUser);
+            return back()->with('success', 'Item voided successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -234,37 +304,16 @@ class OrderController extends Controller
             ->where('status', 'open')
             ->first();
 
-        if (!$order) return back();
-
-        // --- Stock validation & deduction at checkout ---
-        foreach ($order->items as $orderItem) {
-            $menuItem = $orderItem->menuItem;
-            if (!$menuItem || $menuItem->stock_quantity === null) {
-                continue; // unlimited — skip
-            }
-            if ($menuItem->stock_quantity < $orderItem->quantity) {
-                return back()->with('error', "Cannot complete order: \"{$menuItem->name}\" only has {$menuItem->stock_quantity} left in stock.");
-            }
+        if (!$order) {
+            return back()->with('error', 'No open order found or already completed.');
         }
 
-        // All stock checks passed — deduct now
-        foreach ($order->items as $orderItem) {
-            $menuItem = $orderItem->menuItem;
-            if ($menuItem && $menuItem->stock_quantity !== null) {
-                $menuItem->decrement('stock_quantity', $orderItem->quantity);
-            }
+        try {
+            $this->orderFlowService->checkoutShortOrder($order, $request->all());
+            return back()->with('success', 'Order completed successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $order->update([
-            'status'           => 'paid',
-            'payment_method'   => $request->payment_method ?? 'cash',
-            'amount_received'  => $request->amount_received ?? $order->total_amount,
-            'reference_number' => $request->reference_number,
-            'closed_at'        => now(),
-            'user_id'          => $order->user_id ?? (auth()->id() ?? 1),
-        ]);
-
-        return back()->with('success', 'Order completed successfully.');
     }
 
     public function clear()

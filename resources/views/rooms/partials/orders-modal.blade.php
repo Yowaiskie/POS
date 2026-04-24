@@ -30,7 +30,7 @@
                             $status = $item->stockStatus();
                             $outOfStock = $item->isOutOfStock();
                         @endphp
-                        <form action="{{ route('orders.add-item') }}" method="POST" x-show="selectedCategory === '{{ $item->category->slug }}'" x-transition>
+                        <form action="{{ route('orders.add-item') }}" method="POST" x-show="selectedCategory === '{{ $item->category->slug }}'" x-transition @submit.prevent="submitOrderForm($event)">
                             @csrf
                             <input type="hidden" name="menu_item_id" value="{{ $item->id }}">
                             <input type="hidden" name="room_session_id" :value="activeSession ? activeSession.id : ''">
@@ -65,10 +65,22 @@
 
             <!-- Right: Order Summary -->
             <div class="w-80 border-l border-gray-200 bg-gray-50 flex flex-col">
-                <div class="p-4 border-b border-gray-200 bg-white">
+                <div class="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <i data-lucide="shopping-cart" class="w-5 h-5 text-[#6366f1]"></i>
                         <span class="text-lg font-semibold">Order Summary</span>
+                    </div>
+
+                    <button @click="unlockManagerMode()" 
+                            x-show="!isUnlocked"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-200 hover:bg-amber-100 transition-all active:scale-95 shadow-sm">
+                        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Void Mode</span>
+                    </button>
+                    
+                    <div x-show="isUnlocked" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-200 shadow-sm animate-pulse">
+                        <i data-lucide="unlock" class="w-3.5 h-3.5"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Unlocked</span>
                     </div>
                 </div>
 
@@ -78,46 +90,62 @@
                             <div class="space-y-2">
                                 <template x-for="item in order.items" :key="item.id">
                                     <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-                                         <div class="flex justify-between items-start gap-2 mb-2">
+                                        <div class="flex justify-between items-start gap-2 mb-2" :class="item.is_voided ? 'opacity-50' : ''">
                                              <div class="flex-1">
-                                                 <div class="font-medium text-sm text-slate-900" x-text="item.name"></div>
+                                                 <div class="font-medium text-sm text-slate-900 flex items-center gap-2">
+                                                     <span x-text="item.name"></span>
+                                                     <template x-if="item.is_voided">
+                                                         <span class="px-1.5 py-0.5 bg-red-100 text-red-600 text-[9px] font-black rounded border border-red-200 uppercase">VOIDED</span>
+                                                     </template>
+                                                     <template x-if="!item.is_voided && item.is_stock_deducted">
+                                                         <span class="px-1.5 py-0.5 bg-amber-100 text-amber-600 text-[9px] font-bold rounded border border-amber-200 uppercase">Served</span>
+                                                     </template>
+                                                 </div>
                                                  <div class="text-xs text-gray-500" x-text="'₱' + Number(item.unit_price).toLocaleString() + ' x ' + item.quantity"></div>
                                                  
                                                  <template x-if="item.menu_item && item.menu_item.stock_quantity !== null">
                                                      <div class="text-[10px] font-bold mt-1" 
                                                           :class="item.quantity >= item.menu_item.stock_quantity ? 'text-red-500' : 'text-slate-400'">
                                                         <span x-text="'Stock: ' + item.menu_item.stock_quantity"></span>
+                                                     </div>
+                                                 </template>
+                                             </div>
+                                             
+                                             {{-- Trash Icon (Unlocked Only) --}}
+                                             <template x-if="!item.is_voided && isUnlocked">
+                                                 <form :action="`{{ url('orders/remove-item') }}/${item.id}`" method="POST">
+                                                     @csrf
+                                                     @method('DELETE')
+                                                     <input type="hidden" name="admin_id" :value="isUnlocked ? '1' : ''"> {{-- Placeholder since we already authorized --}}
+                                                     <button type="submit" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all active:scale-95">
+                                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                     </button>
+                                                 </form>
+                                             </template>
+                                        </div>
+
+                                        {{-- Quantity Controls --}}
+                                        <div class="flex items-center justify-between mt-1" :class="item.is_voided ? 'opacity-30 pointer-events-none' : ''">
+                                            <div class="font-bold text-[#6366f1]" x-text="'₱' + (item.unit_price * item.quantity).toLocaleString()"></div>
+                                            
+                                            <div class="flex items-center gap-2">
+                                                {{-- Locked View --}}
+                                                <template x-if="!isUnlocked">
+                                                    <div class="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                                                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Qty:</span>
+                                                        <span class="text-base font-black text-slate-900" x-text="item.quantity"></span>
                                                     </div>
                                                 </template>
-                                            </div>
-                                            <form :action="`{{ url('orders/remove-item') }}/${item.id}`" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-1 hover:bg-red-100 rounded transition-colors text-red-600">
-                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                        <div class="flex items-center justify-between">
-                                            <div class="font-semibold text-[#6366f1]" x-text="'₱' + (item.unit_price * item.quantity).toLocaleString()"></div>
-                                            <div class="flex items-center gap-2">
-                                                <form :action="`{{ url('orders/update-quantity') }}/${item.id}`" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="delta" value="-1">
-                                                    <button type="submit" class="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded text-slate-600">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                                    </button>
-                                                </form>
-                                                <span class="text-sm font-bold w-4 text-center" x-text="item.quantity"></span>
-                                                <form :action="`{{ url('orders/update-quantity') }}/${item.id}`" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="delta" value="1">
-                                                    <button type="submit" 
-                                                            class="w-6 h-6 flex items-center justify-center bg-[#6366f1] text-white hover:bg-indigo-700 rounded shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                                                            :disabled="item.menu_item && item.menu_item.stock_quantity !== null && item.quantity >= item.menu_item.stock_quantity">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                                    </button>
-                                                </form>
+
+                                                {{-- Unlocked Input --}}
+                                                <template x-if="isUnlocked && !item.is_voided">
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="number" min="1" 
+                                                               :value="item.quantity" 
+                                                               @change="updateItemQuantity(item, $event.target.value)"
+                                                               class="w-16 text-center font-black text-base border-2 border-indigo-200 rounded-lg py-0.5 focus:border-indigo-500 focus:outline-none bg-white shadow-sm">
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>

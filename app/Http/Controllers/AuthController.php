@@ -39,4 +39,29 @@ class AuthController extends Controller
 
         return redirect('/login');
     }
+
+    public function verifyPin(Request $request)
+    {
+        $request->validate([
+            'pin' => 'required|string',
+        ]);
+
+        // Find any admin with this PIN
+        $admin = \App\Models\User::where('position', 'Admin')
+            ->where('admin_pin', $request->pin)
+            ->first();
+
+        if ($admin) {
+            return response()->json([
+                'success' => true,
+                'admin_id' => $admin->id,
+                'admin_name' => $admin->name
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid Security PIN.'
+        ], 422);
+    }
 }

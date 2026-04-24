@@ -25,7 +25,11 @@
             </button>
         </div>
 
-        <form x-bind:action="activeRoom ? `{{ url('rooms') }}/${activeRoom.id}/start` : ''" method="POST" class="flex flex-col flex-1 overflow-hidden" x-data="{ selectedPromo: '' }">
+        <form x-bind:action="activeRoom ? `{{ url('rooms') }}/${activeRoom.id}/start` : ''" 
+              method="POST" 
+              class="flex flex-col flex-1 overflow-hidden" 
+              x-data="{ selectedPromo: '', isStarting: false }"
+              @submit="isStarting = true">
             @csrf
             
             <div class="p-6 overflow-y-auto space-y-4">
@@ -96,9 +100,21 @@
                 <button type="button" @click="showStartSessionModal = false" class="flex-1 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 active:scale-95 transition-all font-semibold">
                     Cancel
                 </button>
-                <button type="submit" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-95 transition-all font-semibold shadow-md flex justify-center items-center gap-2">
-                    <i data-lucide="play" class="w-4 h-4"></i>
-                    Start Now
+                <button type="submit" 
+                        :disabled="isStarting"
+                        class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-95 transition-all font-semibold shadow-md flex justify-center items-center gap-2 disabled:opacity-50">
+                    <template x-if="!isStarting">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            <span>Start Now</span>
+                        </div>
+                    </template>
+                    <template x-if="isStarting">
+                        <div class="flex items-center gap-2">
+                            <i class="animate-spin w-4 h-4" data-lucide="loader-2"></i>
+                            <span>Starting...</span>
+                        </div>
+                    </template>
                 </button>
             </div>
         </form>

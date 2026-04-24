@@ -150,13 +150,21 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <button @click="paymentMethod = null" class="py-4 font-bold text-slate-400 hover:text-slate-600 transition-all uppercase tracking-widest">Back</button>
-                <form :action="`{{ url('rooms/sessions') }}/${activeSession ? activeSession.id : ''}/bill-out`" method="POST">
+                <form :action="`{{ url('rooms/sessions') }}/${activeSession ? activeSession.id : ''}/bill-out`" method="POST" @submit="isProcessing = true">
                     @csrf
                     <input type="hidden" name="payment_method" value="cash">
                     <input type="hidden" name="amount_received" :value="receivedAmount">
-                    <button type="submit" :disabled="receivedAmount < Math.floor(totalAmount)" 
-                            class="w-full py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-100 font-bold disabled:opacity-50 disabled:grayscale uppercase tracking-widest">
-                        Confirm Payment
+                    <button type="submit" :disabled="isProcessing || receivedAmount < Math.floor(totalAmount)" 
+                            class="w-full py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-100 font-bold disabled:opacity-50 disabled:grayscale uppercase tracking-widest flex items-center justify-center gap-2">
+                        <template x-if="!isProcessing">
+                            <span>Confirm Payment</span>
+                        </template>
+                        <template x-if="isProcessing">
+                            <div class="flex items-center gap-2">
+                                <i class="animate-spin w-5 h-5" data-lucide="loader-2"></i>
+                                <span>Processing...</span>
+                            </div>
+                        </template>
                     </button>
                 </form>
             </div>
@@ -176,13 +184,21 @@
             
             <div class="grid grid-cols-2 gap-4">
                 <button @click="paymentMethod = null" class="py-4 font-bold text-slate-400 hover:text-slate-600 transition-all uppercase tracking-widest">Back</button>
-                <form :action="`{{ url('rooms/sessions') }}/${activeSession ? activeSession.id : ''}/bill-out`" method="POST">
+                <form :action="`{{ url('rooms/sessions') }}/${activeSession ? activeSession.id : ''}/bill-out`" method="POST" @submit="isProcessing = true">
                     @csrf
                     <input type="hidden" name="payment_method" value="gcash">
                     <input type="hidden" name="reference_number" :value="transactionNumber">
-                    <button type="submit" :disabled="transactionNumber.length !== 13" 
-                            class="w-full py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 active:scale-95 transition-all shadow-xl shadow-blue-100 font-bold disabled:opacity-50 disabled:grayscale uppercase tracking-widest">
-                        Verify & Complete
+                    <button type="submit" :disabled="isProcessing || transactionNumber.length !== 13" 
+                            class="w-full py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 active:scale-95 transition-all shadow-xl shadow-blue-100 font-bold disabled:opacity-50 disabled:grayscale uppercase tracking-widest flex items-center justify-center gap-2">
+                        <template x-if="!isProcessing">
+                            <span>Verify & Complete</span>
+                        </template>
+                        <template x-if="isProcessing">
+                            <div class="flex items-center gap-2">
+                                <i class="animate-spin w-5 h-5" data-lucide="loader-2"></i>
+                                <span>Verifying...</span>
+                            </div>
+                        </template>
                     </button>
                 </form>
             </div>

@@ -137,6 +137,46 @@
                     </div>
                 </form>
             </div>
+            <!-- Security PIN Settings (New) -->
+            <div class="bg-white border border-slate-200 rounded-xl p-6 mt-6" style="box-shadow: var(--shadow-md)">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-slate-900">
+                        <i data-lucide="shield-check" class="w-5 h-5 inline mr-2 text-emerald-500"></i>
+                        Admin Security PIN
+                    </h3>
+                    @if($user->admin_pin)
+                        <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded uppercase">PIN Set</span>
+                    @else
+                        <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-black rounded uppercase">Not Set</span>
+                    @endif
+                </div>
+
+                <form action="{{ route('profile.pin') }}" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">New Security PIN</label>
+                            <div class="flex gap-4 items-start">
+                                <div class="flex-1">
+                                    <input type="password" name="admin_pin" required 
+                                           maxlength="6"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                           placeholder="4 to 6 digits" 
+                                           class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors @error('admin_pin') border-red-400 @enderror">
+                                    <p class="text-[10px] text-slate-400 mt-2">PIN is used for high-security actions like Voiding items.</p>
+                                    @error('admin_pin')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 active:scale-98 transition-all font-semibold shadow-md whitespace-nowrap">
+                                    Update PIN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

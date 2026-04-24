@@ -11,11 +11,71 @@
 <body class="antialiased" x-data="{
     sidebarCollapsed: JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'false'),
     notifications: [],
+    
+    // PIN Modal State
+    showPinModal: false,
+    pinValue: '',
+    pinError: '',
+    isVerifyingPin: false,
+    pinCallback: null,
+
     toggleSidebar() {
         this.sidebarCollapsed = !this.sidebarCollapsed;
         localStorage.setItem('sidebarCollapsed', JSON.stringify(this.sidebarCollapsed));
+    },
+
+    openPinModal(callback) {
+        this.pinValue = '';
+        this.pinError = '';
+        this.pinCallback = callback;
+        this.showPinModal = true;
+        this.$nextTick(() => {
+            if (this.$refs.pinInput) {
+                this.$refs.pinInput.focus();
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    },
+
+    closePinModal() {
+        this.showPinModal = false;
+        this.pinValue = '';
+        this.pinError = '';
+    },
+
+    async verifyPin() {
+        if (this.pinValue.length < 4) return;
+        
+        this.isVerifyingPin = true;
+        try {
+            const response = await fetch('{{ route('verify-pin') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ pin: this.pinValue })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showPinModal = false;
+                if (this.pinCallback) this.pinCallback(data.admin_id);
+                this.pinValue = '';
+            } else {
+                this.pinError = data.message;
+                this.pinValue = '';
+            }
+        } catch (error) {
+            this.pinError = 'Verification failed.';
+            this.pinValue = '';
+        } finally {
+            this.isVerifyingPin = false;
+        }
     }
-}" x-effect="notifications.length; $nextTick(() => lucide.createIcons())">
+}">
     <div class="flex h-screen bg-[--background] text-[--foreground] overflow-hidden">
         <!-- Sidebar -->
         @include('partials.sidebar')
@@ -28,6 +88,8 @@
         @include('partials.mobile-nav')
     </div>
 
+    @include('partials.pin-modal')
+
     <!-- Toast Notifications -->
     <div class="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-50 flex flex-col gap-3 pointer-events-none">
         <!-- Dynamic Notifications -->
@@ -36,7 +98,7 @@
                  :class="n.type === 'error' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'"
                  x-transition:enter="translate-x-full" x-transition:enter-end="translate-x-0"
                  x-transition:leave="opacity-0 scale-95">
-                <i :data-lucide="n.type === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6"></i>
+                <i :data-lucide="n.type === 'error' ? 'alert-circle' : 'check-circle'" class="w-6 h-6" x-init="$nextTick(() => lucide.createIcons($el.parentElement))"></i>
                 <div class="font-bold" x-text="n.message"></div>
             </div>
         </template>
