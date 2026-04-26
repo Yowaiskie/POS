@@ -33,6 +33,7 @@
         <select name="position" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             <option value="Staff" {{ old('position') === 'Staff' ? 'selected' : '' }}>Staff</option>
             <option value="Admin" {{ old('position') === 'Admin' ? 'selected' : '' }}>Admin</option>
+            <option value="Kitchen" {{ old('position') === 'Kitchen' ? 'selected' : '' }}>Kitchen</option>
         </select>
     </div>
     <div class="col-span-2">

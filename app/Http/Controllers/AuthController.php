@@ -22,6 +22,10 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            if (Auth::user()->position === 'Kitchen') {
+                return redirect()->intended('/kitchen');
+            }
+
             return redirect()->intended('/');
         }
 

@@ -68,7 +68,13 @@
                                 {{ $user->username }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ strtolower($user->position) === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700' }}">
+                                @php
+                                    $posStr = strtolower($user->position);
+                                    if ($posStr === 'admin') $badgeClass = 'bg-purple-100 text-purple-700';
+                                    elseif ($posStr === 'kitchen') $badgeClass = 'bg-orange-100 text-orange-700';
+                                    else $badgeClass = 'bg-emerald-100 text-emerald-700';
+                                @endphp
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $badgeClass }}">
                                     {{ $user->position }}
                                 </span>
                             </td>
@@ -197,6 +203,7 @@
                         <select name="position" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="Admin" :selected="editUser.position === 'Admin'">Admin</option>
                             <option value="Staff" :selected="editUser.position === 'Staff'">Staff</option>
+                            <option value="Kitchen" :selected="editUser.position === 'Kitchen'">Kitchen</option>
                         </select>
                     </div>
                     <div class="col-span-2">

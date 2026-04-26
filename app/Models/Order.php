@@ -24,6 +24,8 @@ class Order extends Model
         'closed_at',
         'promo_name',
         'promo_price',
+        'location',
+        'dining_option',
     ];
 
     protected $casts = [

@@ -20,19 +20,28 @@
     {{-- Nav Items --}}
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
         @php
-            $navItems = [
-                ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
-                ['route' => 'rooms.index', 'icon' => 'door-open',        'label' => 'Manage Rooms'],
-                ['route' => 'orders.index','icon' => 'shopping-bag',     'label' => 'Short Orders'],
-            ];
+            $position = auth()->check() ? strtolower(auth()->user()->position) : '';
 
-            if (auth()->check() && strtolower(auth()->user()->position) === 'admin') {
-                $navItems[] = ['route' => 'menu.index',       'icon' => 'utensils',    'label' => 'Menu'];
-                $navItems[] = ['route' => 'promo-sets.index', 'icon' => 'sparkles',    'label' => 'Promo Sets'];
-                $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
-                $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
-                $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
-                $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
+            if ($position === 'kitchen') {
+                $navItems = [
+                    ['route' => 'kitchen.index', 'icon' => 'chef-hat', 'label' => 'Kitchen Dashboard'],
+                ];
+            } else {
+                $navItems = [
+                    ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
+                    ['route' => 'rooms.index', 'icon' => 'door-open',        'label' => 'Manage Rooms'],
+                    ['route' => 'orders.index','icon' => 'shopping-bag',     'label' => 'Short Orders'],
+                ];
+
+                if ($position === 'admin') {
+                    $navItems[] = ['route' => 'kitchen.index',    'icon' => 'chef-hat',    'label' => 'Kitchen'];
+                    $navItems[] = ['route' => 'menu.index',       'icon' => 'utensils',    'label' => 'Menu'];
+                    $navItems[] = ['route' => 'promo-sets.index', 'icon' => 'sparkles',    'label' => 'Promo Sets'];
+                    $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
+                    $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
+                    $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
+                    $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
+                }
             }
 
             $navItems[] = ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'];

@@ -22,7 +22,7 @@ class UserController extends Controller
             'name'        => ['required', 'string', 'max:255'],
             'username'    => ['required', 'string', 'max:255', 'unique:users,username'],
             'phone'       => ['nullable', 'digits:11'],
-            'position'    => ['required', 'in:Admin,Staff'],
+            'position'    => ['required', 'in:Admin,Staff,Kitchen'],
             'password'    => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
@@ -51,7 +51,7 @@ class UserController extends Controller
             'name'        => ['required', 'string', 'max:255'],
             'username'    => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
             'phone'       => ['nullable', 'digits:11'],
-            'position'    => ['required', 'in:Admin,Staff'],
+            'position'    => ['required', 'in:Admin,Staff,Kitchen'],
             'password'    => ['nullable', 'string', 'min:6', 'confirmed'],
         ]);
 

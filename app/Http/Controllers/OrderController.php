@@ -73,16 +73,18 @@ class OrderController extends Controller
             $order = Order::firstOrCreate(
                 ['room_session_id' => $request->room_session_id, 'status' => 'open', 'order_type' => 'room'],
                 [
-                    'order_number' => 'RO-' . strtoupper(uniqid()), 
+                    'order_number' => 'RO-' . strtoupper(\Illuminate\Support\Str::random(5)), 
                     'user_id' => $userId,
-                    'transaction_id' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6))
+                    'transaction_id' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                    'location' => 'bar',
+                    'dining_option' => 'dine-in'
                 ]
             );
         } else {
             $order = Order::firstOrCreate(
                 ['order_type' => 'short', 'status' => 'open'],
                 [
-                    'order_number' => 'SO-' . strtoupper(uniqid()), 
+                    'order_number' => 'SO-' . strtoupper(\Illuminate\Support\Str::random(5)), 
                     'user_id' => $userId,
                     'transaction_id' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(6))
                 ]
@@ -291,6 +293,10 @@ class OrderController extends Controller
 
     public function checkout(Request $request)
     {
+        $request->validate([
+            'location' => 'required|in:bar,cafe',
+            'dining_option' => 'required|in:dine-in,takeout',
+        ]);
         if ($request->payment_method === 'gcash') {
             $request->validate([
                 'reference_number' => 'required|digits:13',

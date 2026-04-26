@@ -20,6 +20,8 @@
     paymentMethod: "cash",
     amountReceived: 0,
     gcashRef: "",
+    location: "",
+    diningOption: "",
     isCheckingOut: false,
     isUnlocked: false,
     processingItems: [], 
@@ -316,11 +318,41 @@
                             <input type="text" name="reference_number" x-model="gcashRef" maxlength="13" :required="paymentMethod === 'gcash'" placeholder="13-digit Ref #" class="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-lg focus:border-[#6366f1] focus:bg-white focus:outline-none font-bold">
                         </div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2 px-1">Location</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="location" value="bar" x-model="location" class="sr-only peer" required>
+                                    <div class="py-2 rounded-lg font-bold text-center border-2 border-gray-100 text-gray-400 peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 uppercase text-xs">Bar</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="location" value="cafe" x-model="location" class="sr-only peer" required>
+                                    <div class="py-2 rounded-lg font-bold text-center border-2 border-gray-100 text-gray-400 peer-checked:bg-blue-500 peer-checked:text-white peer-checked:border-blue-500 uppercase text-xs">Cafe</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2 px-1">Dining Option</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="dining_option" value="dine-in" x-model="diningOption" class="sr-only peer" required>
+                                    <div class="py-2 rounded-lg font-bold text-center border-2 border-gray-100 text-gray-400 peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:border-emerald-500 uppercase text-xs">Dine-in</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="dining_option" value="takeout" x-model="diningOption" class="sr-only peer" required>
+                                    <div class="py-2 rounded-lg font-bold text-center border-2 border-gray-100 text-gray-400 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500 uppercase text-xs">Takeout</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex gap-3 mt-8">
                     <button type="button" @click="showCheckout = false" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-lg font-bold text-sm uppercase">Back</button>
-                    <button type="submit" :disabled="isCheckingOut || (paymentMethod === 'cash' && (amountReceived < total || total <= 0)) || (paymentMethod === 'gcash' && gcashRef.length !== 13)" 
+                    <button type="submit" :disabled="isCheckingOut || !location || !diningOption || (paymentMethod === 'cash' && (amountReceived < total || total <= 0)) || (paymentMethod === 'gcash' && gcashRef.length !== 13)" 
                             class="flex-1 py-4 bg-[#6366f1] text-white rounded-lg font-bold text-sm uppercase shadow-lg disabled:opacity-50">
                         <span x-show="!isCheckingOut">Complete Order</span>
                         <span x-show="isCheckingOut">Processing...</span>

@@ -58,6 +58,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/pdf', [ReportController::class, 'pdf'])->name('pdf');
     });
 
+    Route::prefix('kitchen')->name('kitchen.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\KitchenController::class, 'index'])->name('index');
+        Route::post('/serve/{item}', [\App\Http\Controllers\KitchenController::class, 'serve'])->name('serve');
+        Route::post('/serve-order/{order}', [\App\Http\Controllers\KitchenController::class, 'serveOrder'])->name('serveOrder');
+    });
+
     Route::prefix('inventory')->name('inventory.')->middleware('role:admin')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
         Route::post('/bulk-update', [InventoryController::class, 'bulkUpdate'])->name('bulk-update');

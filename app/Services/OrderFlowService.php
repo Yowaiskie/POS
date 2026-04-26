@@ -164,6 +164,8 @@ class OrderFlowService
                 'reference_number' => $data['reference_number'] ?? null,
                 'closed_at'        => now(),
                 'user_id'          => $order->user_id ?? (auth()->id() ?? 1),
+                'location'         => $data['location'] ?? null,
+                'dining_option'    => $data['dining_option'] ?? null,
             ]);
         });
     }

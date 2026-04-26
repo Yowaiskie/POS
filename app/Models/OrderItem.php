@@ -20,6 +20,7 @@ class OrderItem extends Model
         'is_voided',
         'voided_at',
         'voided_by',
+        'kitchen_status',
     ];
 
     protected $casts = [

@@ -30,6 +30,14 @@ class UserSeeder extends Seeder
                 'position' => 'Staff',
                 'password' => Hash::make('password'),
             ],
+            [
+                'name' => 'Kitchen Staff',
+                'username' => 'kitchen',
+                'employee_id' => 'EMP-005',
+                'phone' => '+63 912 333 4444',
+                'position' => 'Kitchen',
+                'password' => Hash::make('password'),
+            ],
         ];
 
         foreach ($users as $user) {
