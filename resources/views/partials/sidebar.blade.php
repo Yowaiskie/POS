@@ -1,12 +1,19 @@
-<div class="h-screen bg-[--sidebar] border-r border-[--border] flex flex-col hidden lg:flex shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out"
+<div class="h-screen bg-[--sidebar] border-r border-[--border] flex flex-col hidden lg:flex shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out sidebar-container"
      style="box-shadow: var(--shadow-sm)"
      :class="sidebarCollapsed ? 'w-[72px]' : 'w-64'">
+
+    <style>
+        /* Anti-flicker classes */
+        .sidebar-container { width: 16rem; } /* Default w-64 */
+        .sidebar-collapsed .sidebar-container { width: 72px; }
+    </style>
 
     {{-- Header --}}
     <div class="h-16 px-3 border-b border-[--border] flex items-center bg-gradient-to-b from-white to-gray-50 shrink-0"
          :class="sidebarCollapsed ? 'justify-center' : 'justify-between px-4'">
-        <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="overflow-hidden">
+        <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="overflow-hidden flex items-center gap-3">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-10 w-10 object-cover rounded-full border border-gray-200">
+            <span class="font-bold text-lg tracking-tight text-indigo-900 whitespace-nowrap">BOSSTON KTV</span>
         </div>
         <button @click="toggleSidebar()"
                 class="p-2 hover:bg-gray-100 rounded-lg transition-all active:scale-95 shrink-0"
@@ -18,56 +25,99 @@
     </div>
 
     {{-- Nav Items --}}
-    <nav class="flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden">
+    <nav class="flex-1 p-3 space-y-6 overflow-y-auto overflow-x-hidden">
         @php
             $position = auth()->check() ? strtolower(auth()->user()->position) : '';
 
             if ($position === 'kitchen') {
-                $navItems = [
-                    ['route' => 'kitchen.index', 'icon' => 'chef-hat', 'label' => 'Kitchen Dashboard'],
+                $sidebarGroups = [
+                    'MAIN' => [
+                        ['route' => 'kitchen.index', 'icon' => 'chef-hat', 'label' => 'Kitchen Dashboard'],
+                    ],
+                    'ACCOUNT' => [
+                        ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'],
+                    ]
+                ];
+            } elseif ($position === 'admin') {
+                $sidebarGroups = [
+                    'MAIN' => [
+                        ['route' => 'dashboard', 'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
+                    ],
+                    'LIVE OPERATIONS' => [
+                        ['route' => 'rooms.index', 'icon' => 'door-open', 'label' => 'Manage Rooms'],
+                        ['route' => 'orders.index', 'icon' => 'shopping-bag', 'label' => 'Short Orders'],
+                        ['route' => 'kitchen.index', 'icon' => 'chef-hat', 'label' => 'Kitchen (View Only)'],
+                    ],
+                    'SALES & POS CONTROL' => [
+                        ['route' => 'promo-sets.index', 'icon' => 'sparkles', 'label' => 'Promo Sets'],
+                        ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'],
+                    ],
+                    'INVENTORY & MENU' => [
+                        ['route' => 'inventory.index', 'icon' => 'package', 'label' => 'Inventory'],
+                        ['route' => 'menu.index', 'icon' => 'utensils', 'label' => 'Menu Management'],
+                    ],
+                    'FINANCE & CASHFLOW' => [
+                        ['route' => 'admin.shifts.index', 'icon' => 'wallet', 'label' => 'Shift Management'],
+                        ['route' => 'admin.transactions.index', 'icon' => 'receipt-text', 'label' => 'Transactions (Audit)'],
+                        ['route' => 'reports.index', 'icon' => 'bar-chart-2', 'label' => 'Reports'],
+                    ],
+                    'ADMIN TOOLS' => [
+                        ['route' => 'users.index', 'icon' => 'users', 'label' => 'User Management'],
+                    ],
+                    'ACCOUNT' => [
+                        ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'],
+                    ]
                 ];
             } else {
-                $navItems = [
-                    ['route' => 'dashboard',   'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
-                    ['route' => 'rooms.index', 'icon' => 'door-open',        'label' => 'Manage Rooms'],
-                    ['route' => 'orders.index','icon' => 'shopping-bag',     'label' => 'Short Orders'],
+                $sidebarGroups = [
+                    'MAIN' => [
+                        ['route' => 'dashboard', 'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
+                    ],
+                    'LIVE OPERATIONS' => [
+                        ['route' => 'rooms.index', 'icon' => 'door-open', 'label' => 'Manage Rooms'],
+                        ['route' => 'orders.index', 'icon' => 'shopping-bag', 'label' => 'Short Orders'],
+                    ],
+                    'ACCOUNT' => [
+                        ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'],
+                    ]
                 ];
-
-                if ($position === 'admin') {
-                    $navItems[] = ['route' => 'kitchen.index',    'icon' => 'chef-hat',    'label' => 'Kitchen'];
-                    $navItems[] = ['route' => 'menu.index',       'icon' => 'utensils',    'label' => 'Menu'];
-                    $navItems[] = ['route' => 'promo-sets.index', 'icon' => 'sparkles',    'label' => 'Promo Sets'];
-                    $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
-                    $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
-                    $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
-                    $navItems[] = ['route' => 'admin.shifts.index', 'icon' => 'wallet', 'label' => 'Shift Management'];
-                    $navItems[] = ['route' => 'admin.transactions.index', 'icon' => 'receipt-text', 'label' => 'Transactions (Audit)'];
-                    $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
-                }
             }
-
-            $navItems[] = ['route' => 'profile.index', 'icon' => 'user-circle', 'label' => 'Profile'];
         @endphp
 
-        @foreach($navItems as $item)
-            @php $isActive = request()->routeIs($item['route']); @endphp
-            <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
-               title="{{ $item['label'] }}"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 font-medium group
-                      {{ $isActive
-                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}"
-               :class="sidebarCollapsed ? 'justify-center' : ''">
-                <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5 shrink-0 {{ $isActive ? 'text-white' : 'text-slate-500 group-hover:text-indigo-600' }}"></i>
-                <span x-show="!sidebarCollapsed"
-                      x-transition:enter="transition ease-out duration-200"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      class="whitespace-nowrap text-sm overflow-hidden">
-                    {{ $item['label'] }}
-                </span>
-            </a>
-        @endforeach
+        <div class="space-y-6">
+            @foreach($sidebarGroups as $groupLabel => $items)
+                <div class="space-y-1">
+                    {{-- Static Group Header --}}
+                    <div x-show="!sidebarCollapsed" class="px-3 mb-2 flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ $groupLabel }}</span>
+                        <div class="h-px flex-1 bg-slate-100"></div>
+                    </div>
+                    
+                    {{-- Divider for Collapsed State --}}
+                    <div x-show="sidebarCollapsed" class="mx-2 mb-2 border-t border-slate-100/50"></div>
+
+                    {{-- Group Items (Always Visible) --}}
+                    <div class="space-y-1">
+                        @foreach($items as $item)
+                            @php $isActive = request()->routeIs($item['route']); @endphp
+                            <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
+                               title="{{ $item['label'] }}"
+                               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 font-medium group
+                                      {{ $isActive
+                                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600' }}"
+                               :class="sidebarCollapsed ? 'justify-center' : ''">
+                                <i data-lucide="{{ $item['icon'] }}" class="w-4.5 h-4.5 shrink-0 {{ $isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600' }}"></i>
+                                <span x-show="!sidebarCollapsed"
+                                      class="whitespace-nowrap text-sm overflow-hidden">
+                                    {{ $item['label'] }}
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div>
     </nav>
 
     {{-- Realtime Clock --}}

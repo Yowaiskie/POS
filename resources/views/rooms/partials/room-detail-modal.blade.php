@@ -42,15 +42,15 @@
         <div class="grid grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8 p-4 md:p-6 bg-gray-50 rounded-xl border border-gray-200">
             <div>
                 <div class="text-xs md:text-sm text-gray-500 mb-1 font-medium">Start Time</div>
-                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession ? new Date(activeSession.starts_at).toLocaleTimeString() : ''"></div>
+                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession && activeSession.started_at ? new Date(activeSession.started_at.replace(' ', 'T')).toLocaleTimeString() : '---'"></div>
             </div>
             <div>
                 <div class="text-xs md:text-sm text-gray-500 mb-1 font-medium">End Time</div>
-                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession ? new Date(activeSession.ends_at).toLocaleTimeString() : ''"></div>
+                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession && activeSession.ends_at ? new Date(activeSession.ends_at.replace(' ', 'T')).toLocaleTimeString() : '---'"></div>
             </div>
             <div>
                 <div class="text-xs md:text-sm text-gray-500 mb-1 font-medium">Duration</div>
-                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession ? Math.floor((new Date(activeSession.ends_at) - new Date(activeSession.starts_at)) / (1000 * 60 * 60)) + ' hours' : ''"></div>
+                <div class="text-base md:text-lg font-bold text-slate-900" x-text="activeSession && activeSession.started_at && activeSession.ends_at ? Math.round((new Date(activeSession.ends_at.replace(' ', 'T')) - new Date(activeSession.started_at.replace(' ', 'T'))) / (1000 * 60 * 60)) + ' hour(s)' : '---'"></div>
             </div>
             <div>
                 <div class="text-xs md:text-sm text-gray-500 mb-1 font-medium">Current Bill</div>
