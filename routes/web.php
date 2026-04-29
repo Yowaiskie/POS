@@ -97,6 +97,13 @@ Route::middleware(['auth', \App\Http\Middleware\RequireActiveShift::class])->gro
         Route::put('/update', [RoomPricingController::class, 'update'])->name('update');
     });
 
+    Route::prefix('admin/transactions')->name('admin.transactions.')->middleware('role:admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('index');
+        Route::get('/voids', [\App\Http\Controllers\Admin\TransactionController::class, 'voids'])->name('voids');
+        Route::get('/{order}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])->name('show');
+        Route::get('/{order}/receipt', [\App\Http\Controllers\Admin\TransactionController::class, 'receipt'])->name('receipt');
+    });
+
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
         Route::patch('/update', [ProfileController::class, 'update'])->name('update');

@@ -114,6 +114,9 @@
         <h1>KTV SYSTEM</h1>
         <p>123 Karaoke Street</p>
         <p>Tel: (123) 456-7890</p>
+        @if(isset($isReprint) && $isReprint)
+            <h2 style="font-size: 14px; margin-top: 5px; border-top: 1px dashed #000; padding-top: 5px;">*** REPRINT COPY ***</h2>
+        @endif
     </div>
 
     <div class="info">

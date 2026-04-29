@@ -41,6 +41,7 @@
                     $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
                     $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
                     $navItems[] = ['route' => 'admin.shifts.index', 'icon' => 'wallet', 'label' => 'Shift Management'];
+                    $navItems[] = ['route' => 'admin.transactions.index', 'icon' => 'receipt-text', 'label' => 'Transactions (Audit)'];
                     $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
                 }
             }
