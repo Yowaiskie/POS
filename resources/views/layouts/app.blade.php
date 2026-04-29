@@ -104,12 +104,21 @@
         </template>
 
         @if(session('success'))
-            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" 
-                 class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transition-all"
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 8000)" 
+                 class="bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex flex-col gap-3 pointer-events-auto transition-all"
                  x-transition:enter="translate-x-full" x-transition:enter-end="translate-x-0"
                  x-transition:leave="translate-x-full">
-                <i data-lucide="check-circle" class="w-6 h-6"></i>
-                <div class="font-bold">{{ session('success') }}</div>
+                <div class="flex items-center gap-3">
+                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    <div class="font-bold">{{ session('success') }}</div>
+                </div>
+                @if(session('print_receipt_order_id'))
+                <button onclick="window.open('{{ route('orders.receipt', session('print_receipt_order_id')) }}', 'Receipt', 'width=400,height=600')" 
+                        class="mt-2 bg-white text-emerald-700 px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Print Receipt
+                </button>
+                @endif
             </div>
         @endif
         @if(session('error'))

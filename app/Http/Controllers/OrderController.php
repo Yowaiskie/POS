@@ -316,7 +316,7 @@ class OrderController extends Controller
 
         try {
             $this->orderFlowService->checkoutShortOrder($order, $request->all());
-            return back()->with('success', 'Order completed successfully.');
+            return back()->with('success', 'Order completed successfully.')->with('print_receipt_order_id', $order->id);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -338,5 +338,13 @@ class OrderController extends Controller
         }
 
         return back();
+    }
+
+    public function receipt(Order $order)
+    {
+        // Ensure relationships are loaded for the receipt
+        $order->load(['items', 'user', 'roomSession.room']);
+        
+        return view('orders.receipt', compact('order'));
     }
 }

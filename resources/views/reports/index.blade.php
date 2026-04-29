@@ -168,6 +168,7 @@
                         <th class="text-left px-6 py-4 text-sm font-semibold text-slate-700">Staff Name</th>
                         <th class="text-center px-6 py-4 text-sm font-semibold text-slate-700">Date & Time</th>
                         <th class="text-right px-6 py-4 text-sm font-semibold text-slate-700">Amount</th>
+                        <th class="text-center px-6 py-4 text-sm font-semibold text-slate-700">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -224,10 +225,15 @@
                             <td class="px-6 py-4 text-right font-bold text-slate-900">
                                 ₱{{ number_format($order->total_amount) }}
                             </td>
+                            <td class="px-6 py-4 text-center">
+                                <button onclick="window.open('{{ route('orders.receipt', $order->id) }}', 'Receipt', 'width=400,height=600')" class="inline-flex items-center justify-center p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors" title="Reprint Receipt">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td class="px-6 py-4 text-center text-slate-400" colspan="4">No transactions found.</td>
+                            <td class="px-6 py-4 text-center text-slate-400" colspan="7">No transactions found.</td>
                         </tr>
                     @endforelse
                 </tbody>

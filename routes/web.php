@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/remove-item/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
         Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
         Route::post('/clear', [OrderController::class, 'clear'])->name('clear');
+        Route::get('/{order}/receipt', [OrderController::class, 'receipt'])->name('receipt');
     });
 
     Route::prefix('menu')->name('menu.')->middleware('role:admin')->group(function () {
