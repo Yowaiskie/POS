@@ -94,10 +94,13 @@ class InventoryService
             $this->returnStock($item);
         }
 
+        $activeShift = $user ? $user->activeShift : null;
+
         $item->update([
             'is_voided' => true,
             'voided_at' => now(),
             'voided_by' => $user->id,
+            'void_shift_id' => $activeShift ? $activeShift->id : null,
         ]);
     }
 }

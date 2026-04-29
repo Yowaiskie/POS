@@ -20,6 +20,7 @@ class OrderItem extends Model
         'is_voided',
         'voided_at',
         'voided_by',
+        'void_shift_id',
         'kitchen_status',
     ];
 
@@ -39,5 +40,10 @@ class OrderItem extends Model
     public function menuItem(): BelongsTo
     {
         return $this->belongsTo(MenuItem::class);
+    }
+
+    public function voidShift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class, 'void_shift_id');
     }
 }

@@ -16,6 +16,7 @@ class Order extends Model
         'order_number',
         'order_type',
         'room_session_id',
+        'shift_id',
         'user_id',
         'status',
         'payment_method',
@@ -45,6 +46,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     public function getTotalAmountAttribute(): float

@@ -131,7 +131,10 @@ class OrderFlowService
             ]);
 
             // 5. Close Orders
-            $userId = auth()->id() ?? 1;
+            $user = auth()->user();
+            $userId = $user->id ?? 1;
+            $shiftId = $user ? ($user->activeShift->id ?? null) : null;
+            
             foreach ($openOrders as $order) {
                 $order->update([
                     'status'           => 'paid',
@@ -140,6 +143,7 @@ class OrderFlowService
                     'reference_number' => $data['reference_number'] ?? null,
                     'closed_at'        => now(),
                     'user_id'          => $order->user_id ?? $userId,
+                    'shift_id'         => $shiftId,
                 ]);
             }
         });
@@ -157,13 +161,17 @@ class OrderFlowService
             }
 
             // 2. Close Order
+            $user = auth()->user();
+            $shiftId = $user ? ($user->activeShift->id ?? null) : null;
+
             $order->update([
                 'status'           => 'paid',
                 'payment_method'   => $data['payment_method'] ?? 'cash',
                 'amount_received'  => $data['amount_received'] ?? $order->total_amount,
                 'reference_number' => $data['reference_number'] ?? null,
                 'closed_at'        => now(),
-                'user_id'          => $order->user_id ?? (auth()->id() ?? 1),
+                'user_id'          => $order->user_id ?? ($user->id ?? 1),
+                'shift_id'         => $shiftId,
                 'location'         => $data['location'] ?? null,
                 'dining_option'    => $data['dining_option'] ?? null,
             ]);

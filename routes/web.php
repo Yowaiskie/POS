@@ -20,8 +20,17 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::get('/logout', [AuthController::class, 'logout']);
 Route::post('/verify-pin', [AuthController::class, 'verifyPin'])->name('verify-pin')->middleware('auth');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\RequireActiveShift::class])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Shift Routes
+    Route::prefix('shifts')->name('shifts.')->group(function () {
+        Route::get('/prompt', [\App\Http\Controllers\ShiftController::class, 'prompt'])->name('prompt');
+        Route::post('/start', [\App\Http\Controllers\ShiftController::class, 'start'])->name('start');
+        Route::post('/end', [\App\Http\Controllers\ShiftController::class, 'end'])->name('end');
+        Route::post('/{shift}/force-close', [\App\Http\Controllers\ShiftController::class, 'forceClose'])->name('force-close');
+        Route::get('/{shift}/report', [\App\Http\Controllers\ShiftController::class, 'report'])->name('report');
+    });
 
     Route::prefix('rooms')->name('rooms.')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('index');
@@ -76,6 +85,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('admin/shifts')->name('admin.shifts.')->middleware('role:admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ShiftController::class, 'index'])->name('index');
     });
 
     Route::prefix('admin/room-pricing')->name('admin.room_pricing.')->middleware('role:admin')->group(function () {

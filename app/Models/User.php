@@ -55,4 +55,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
+
+    public function activeShift()
+    {
+        return $this->hasOne(Shift::class)->where('status', 'open');
+    }
 }

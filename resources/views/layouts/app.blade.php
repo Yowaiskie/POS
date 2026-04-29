@@ -89,6 +89,7 @@
     </div>
 
     @include('partials.pin-modal')
+    @include('partials.shift-modals')
 
     <!-- Toast Notifications -->
     <div class="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-50 flex flex-col gap-3 pointer-events-none">

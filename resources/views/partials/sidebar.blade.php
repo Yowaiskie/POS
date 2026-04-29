@@ -40,6 +40,7 @@
                     $navItems[] = ['route' => 'inventory.index',  'icon' => 'package',     'label' => 'Inventory'];
                     $navItems[] = ['route' => 'reports.index',    'icon' => 'bar-chart-2', 'label' => 'Reports'];
                     $navItems[] = ['route' => 'admin.room_pricing.index', 'icon' => 'banknote', 'label' => 'Room Pricing'];
+                    $navItems[] = ['route' => 'admin.shifts.index', 'icon' => 'wallet', 'label' => 'Shift Management'];
                     $navItems[] = ['route' => 'users.index',      'icon' => 'users',       'label' => 'User Management'];
                 }
             }
@@ -83,6 +84,32 @@
             <div x-show="!sidebarCollapsed" class="text-[10px] text-slate-500 font-medium" x-text="date"></div>
         </div>
     </div>
+
+    {{-- Shift Management --}}
+    @if(auth()->check() && strtolower(auth()->user()->position) !== 'admin' && strtolower(auth()->user()->position) !== 'kitchen')
+    <div class="p-3 border-t border-[--border] bg-gray-50/50 shrink-0">
+        @php $activeShift = auth()->user()->activeShift; @endphp
+        @if($activeShift)
+            <div class="mb-2" x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Active Shift</div>
+                <div class="text-xs text-slate-700">Started: <span class="font-semibold">{{ $activeShift->start_time->format('h:i A') }}</span></div>
+            </div>
+            <button onclick="window.dispatchEvent(new CustomEvent('open-end-shift-modal'))"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-white bg-red-600 hover:bg-red-700 font-semibold rounded-lg transition-colors shadow-sm"
+                    :class="sidebarCollapsed ? 'px-0' : ''" title="End Shift">
+                <i data-lucide="clock-arrow-down" class="w-4 h-4 shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="whitespace-nowrap">End Shift</span>
+            </button>
+        @else
+            <button onclick="window.dispatchEvent(new CustomEvent('open-start-shift-modal'))"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-white bg-green-600 hover:bg-green-700 font-semibold rounded-lg transition-colors shadow-sm"
+                    :class="sidebarCollapsed ? 'px-0' : ''" title="Start Shift">
+                <i data-lucide="clock-arrow-up" class="w-4 h-4 shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="whitespace-nowrap">Start Shift</span>
+            </button>
+        @endif
+    </div>
+    @endif
 
     {{-- User Info + Logout --}}
     <div class="border-t border-[--border] bg-gray-50 shrink-0 overflow-hidden transition-all duration-300"
